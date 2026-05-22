@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bölüş - QR Üreteci</title>
+  <style>
+    body {
+      font-family: -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+    }
+    .kart {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #007aff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+    .masa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 15px;
+    }
+    .masa-qr {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    .masa-qr h3 {
+      margin: 0 0 10px 0;
+      font-size: 22px;
+    }
+    .masa-qr img {
+      width: 180px;
+      height: 180px;
+    }
+    .masa-qr p {
+      margin: 10px 0 0 0;
+      color: #888;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    #mesaj {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+    #mesaj.hata {
+      background: #ffe5e5;
+      color: #c00;
+      display: block;
+    }
+    #mesaj.basari {
+      background: #e5ffe5;
+      color: #060;
+      display: block;
+    }
+    .baslik-satir {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .url-input {
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    @media print {
+      body { background: white; }
+      .yazdirma { display: none; }
+      .masa-grid { grid-template-columns: repeat(2, 1fr); }
+      .masa-qr { page-break-inside: avoid; border: 2px solid #000; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Bölüş - QR Üreteci</h1>
+
+  <div class="kart yazdirma">
+    <p style="margin-top: 0;">Sayfa: yetkili kullanıcılar için yönetim aracı. Önce giriş yapın.</p>
+
+    <div id="ekran-giris">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="garson1@bolus.local">
+      <label>Şifre</label>
+      <input type="password" id="sifre">
+      <button id="giris-btn">Giriş</button>
+    </div>
+
+    <div id="ekran-yonetim" style="display: none;">
+      <p>Hoş geldin, <span id="ad-yazi"></span> · <button id="cikis-btn" style="background: #ff3b30; font-size: 14px; padding: 6px 12px;">Çıkış</button></p>
+
+      <h3>Yeni Masa Ekle</h3>
+      <label>Masa numarası / adı (örn: Masa 3, Bahçe-2)</label>
+      <input type="text" id="masa-numara" placeholder="Masa 3">
+      <label>Müşteri sayfasının yolu (öntanımlı şu sayfanın bulunduğu klasör)</label>
+      <input type="text" id="musteri-url" placeholder="örn: https://bolus.com">
+      <button id="ekle-btn">Masa Ekle</button>
+      <div id="mesaj"></div>
+    </div>
+  </div>
+
+  <div id="ekran-listeleme" style="display: none;">
+    <div class="baslik-satir yazdirma">
+      <h2 style="margin: 0;">Restoranın QR Kodları</h2>
+      <button onclick="window.print()" style="background: #34c759;">Yazdır</button>
+    </div>
+    <div class="masa-grid" id="masa-listesi"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const SUPABASE_URL = 'https://ybgzysyojshulpmdyrrm.supabase.co'
+    const SUPABASE_KEY = 'sb_publishable__y__ogbkSM4Y0QwFrE-UUQ_Eamnac2R'
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    let garsonBilgi = null
+
+    // ----- Yardımcı: Rastgele QR kodu üret -----
+    function rastgeleQrKod() {
+      const harfler = 'abcdefghijklmnopqrstuvwxyz0123456789'
+      let sonuc = ''
+      for (let i = 0; i < 10; i++) {
+        sonuc += harfler.charAt(Math.floor(Math.random() * harfler.length))
+      }
+      return sonuc
+    }
+
+    // ----- Yardımcı: URL'den base klasör yolunu al -----
+    function varsayilanUrl() {
+      const tam = window.location.href
+      const klasor = tam.substring(0, tam.lastIndexOf('/'))
+      return klasor + '/index.html'
+    }
+
+    // ----- GİRİŞ -----
+    document.getElementById('giris-btn').onclick = async () => {
+      const email = document.getElementById('email').value
+      const sifre = document.getElementById('sifre').value
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email, password: sifre
+      })
+
+      if (error) {
+        alert('Hata: ' + error.message)
+        return
+      }
+
+      const { data: garson } = await supabase
+        .from('garsonlar').select('*').eq('id', data.user.id).single()
+
+      if (!garson) {
+        alert('Garson kaydı yok.')
+        await supabase.auth.signOut()
+        return
+      }
+
+      garsonBilgi = garson
+      document.getElementById('ekran-giris').style.display = 'none'
+      document.getElementById('ekran-yonetim').style.display = 'block'
+      document.getElementById('ekran-listeleme').style.display = 'block'
+      document.getElementById('ad-yazi').innerHTML = garson.ad
+      document.getElementById('musteri-url').value = varsayilanUrl()
+      masalariListele()
+    }
+
+    // ----- ÇIKIŞ -----
+    document.getElementById('cikis-btn').onclick = async () => {
+      await supabase.auth.signOut()
+      location.reload()
+    }
+
+    // ----- MASA EKLE -----
+    document.getElementById('ekle-btn').onclick = async () => {
+      const numara = document.getElementById('masa-numara').value.trim()
+      const mesaj = document.getElementById('mesaj')
+
+      if (!numara) {
+        mesaj.className = 'hata'
+        mesaj.innerHTML = 'Masa numarası gerekli.'
+        return
+      }
+
+      const qr = rastgeleQrKod()
+      const { error } = await supabase.from('masalar').insert({
+        restoran_id: garsonBilgi.restoran_id,
+        numara: numara,
+        qr_kod: qr
+      })
+
+      if (error) {
+        mesaj.className = 'hata'
+        mesaj.innerHTML = 'Hata: ' + error.message
+        return
+      }
+
+      mesaj.className = 'basari'
+      mesaj.innerHTML = numara + ' eklendi (QR: ' + qr + ')'
+      document.getElementById('masa-numara').value = ''
+      masalariListele()
+    }
+
+    // ----- MASALARI LİSTELE + QR ÜRET -----
+    async function masalariListele() {
+      const liste = document.getElementById('masa-listesi')
+      liste.innerHTML = 'Yükleniyor...'
+
+      const { data: masalar, error } = await supabase
+        .from('masalar')
+        .select('*')
+        .eq('restoran_id', garsonBilgi.restoran_id)
+        .order('id', { ascending: true })
+
+      if (error) {
+        liste.innerHTML = 'Hata: ' + error.message
+        return
+      }
+
+      const musteriUrl = document.getElementById('musteri-url').value || varsayilanUrl()
+
+      liste.innerHTML = ''
+      masalar.forEach(masa => {
+        const tamUrl = musteriUrl + '?qr=' + masa.qr_kod
+        const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(tamUrl)
+
+        const kart = document.createElement('div')
+        kart.className = 'masa-qr'
+        kart.innerHTML = `
+          <h3>${masa.numara}</h3>
+          <img src="${qrApiUrl}" alt="QR ${masa.numara}">
+          <p>${tamUrl}</p>
+        `
+        liste.appendChild(kart)
+      })
+    }
+  </script>
+
+</body>
+</html>
