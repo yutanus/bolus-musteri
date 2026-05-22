@@ -108,6 +108,22 @@
     .kalem-satir.odendi {
       opacity: 0.5;
     }
+    .sil-btn {
+      background: #ff3b30;
+      color: white;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      line-height: 1;
+    }
+    .sil-btn:disabled {
+      background: #ccc;
+    }
     .form-satir {
       display: flex;
       gap: 8px;
@@ -115,9 +131,6 @@
     }
     .form-satir input {
       margin-bottom: 0;
-    }
-    .form-satir input.kucuk {
-      flex: 0 0 80px;
     }
     #mesaj, #adisyon-mesaj {
       margin-top: 15px;
@@ -270,7 +283,7 @@
       ekranGoster('ekran-giris')
     }
 
-    // ----- GERİ (adisyondan masalara) -----
+    // ----- GERİ -----
     document.getElementById('geri-btn').onclick = () => {
       secilenMasa = null
       ekranGoster('ekran-masalar')
@@ -340,7 +353,6 @@
       }
 
       if (!adisyon) {
-        // Açık adisyon yok, "Yeni Adisyon Aç" butonu göster
         icerik.innerHTML = `
           <div class="kart">
             <p>Bu masada açık adisyon yok.</p>
@@ -351,7 +363,6 @@
         return
       }
 
-      // Açık adisyon var, kalemleri çek
       const { data: kalemler } = await supabase
         .from('adisyon_kalemleri')
         .select('*')
@@ -365,10 +376,16 @@
       let kalemlerHtml = ''
       if (kalemler && kalemler.length > 0) {
         kalemler.forEach(k => {
+          const silButonu = k.odendi_mi 
+            ? '' 
+            : `<button class="sil-btn" data-kalem-id="${k.id}">×</button>`
           kalemlerHtml += `
             <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
               <span>${k.urun_adi} × ${k.adet}</span>
-              <span>${Number(k.toplam).toFixed(2)}₺ ${k.odendi_mi ? '✓' : ''}</span>
+              <span style="display: flex; align-items: center; gap: 10px;">
+                <span>${Number(k.toplam).toFixed(2)}₺ ${k.odendi_mi ? '✓' : ''}</span>
+                ${silButonu}
+              </span>
             </div>
           `
         })
@@ -380,7 +397,7 @@
         <div class="toplam-kutu">
           Toplam: ${toplam.toFixed(2)}₺<br>
           <small style="font-weight: normal; font-size: 14px;">Ödenen: ${odenen.toFixed(2)}₺ · Kalan: ${kalan.toFixed(2)}₺</small>
-        </div>
+        </div> <button id="adisyon-kapat-btn" style="background: #ff9500; margin-bottom: 15px;">Adisyonu Kapat</button>
 
         <div>${kalemlerHtml}</div>
 
@@ -405,7 +422,49 @@
         </div>
       `
 
+      // Sil butonlarına olay bağla
+      document.querySelectorAll('.sil-btn').forEach(btn => {
+        btn.onclick = async () => {
+          const kalemId = btn.getAttribute('data-kalem-id')
+          if (!confirm('Bu kalemi silmek istediğine emin misin?')) {
+            return
+          }
+          btn.disabled = true
+          const { error } = await supabase
+            .from('adisyon_kalemleri')
+            .delete()
+            .eq('id', kalemId)
+          if (error) {
+            alert('Silinemedi: ' + error.message)
+            btn.disabled = false
+            return
+          }
+          adisyonuYukle()
+        }
+      })
+
       document.getElementById('urun-ekle-btn').onclick = () => urunEkle(adisyon.id)
+      document.getElementById('adisyon-kapat-btn').onclick = async () => {
+        const onayMesaj = kalan > 0 
+          ? `Hala ${kalan.toFixed(2)}₺ ödenmemiş. Yine de adisyonu kapatmak istiyor musun?`
+          : 'Adisyonu kapatmak istediğine emin misin?'
+        
+        if (!confirm(onayMesaj)) return
+
+        const { error } = await supabase
+          .from('adisyonlar')
+          .update({ durum: 'odendi', kapanis_zamani: new Date().toISOString() })
+          .eq('id', adisyon.id)
+
+        if (error) {
+          alert('Adisyon kapatılamadı: ' + error.message)
+          return
+        }
+
+        secilenMasa = null
+        ekranGoster('ekran-masalar')
+        masalariYukle()
+      }
     }
 
     // ----- YENİ ADİSYON AÇ -----
@@ -459,19 +518,7 @@
         return
       }
 
-      // Adisyonun toplam_tutar'ını güncelle
-      const { data: tumKalemler } = await supabase
-        .from('adisyon_kalemleri')
-        .select('toplam')
-        .eq('adisyon_id', adisyonId)
-
-      const yeniToplam = (tumKalemler || []).reduce((a, k) => a + Number(k.toplam), 0)
-
-      await supabase
-        .from('adisyonlar')
-        .update({ toplam_tutar: yeniToplam })
-        .eq('id', adisyonId)
-
+      // Trigger toplam_tutar'ı otomatik güncelliyor, JS'in yapması gerekmiyor
       adisyonuYukle()
     }
   </script>

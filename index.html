@@ -81,6 +81,7 @@
   <h1>Hesabınız</h1>
   <div id="adisyon-bilgi">Yükleniyor...</div>
   <div id="kalemler"></div>
+  <button id="hepsini-ode-btn" style="display: none; background: #34c759; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; cursor: pointer; width: 100%; margin-bottom: 15px;">Hepsini Öde</button>
   <div id="tamamlandi">Tüm hesap ödendi. Teşekkürler!</div>
 
   <script type="module">
@@ -157,11 +158,63 @@
         <div class="kalan satir"><span>Kalan:</span><span>${kalan.toFixed(2)}₺</span></div>
       `
 
-      // 7. Tüm kalemler ödendiyse "Tamamlandı" göster
+     const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
+
       if (kalan === 0 && kalemler.length > 0) {
         tamamlandiDiv.style.display = 'block'
+        hepsiniOdeBtn.style.display = 'none'
+
+        if (adisyon.durum === 'acik') {
+          await supabase
+            .from('adisyonlar')
+            .update({ durum: 'odendi', kapanis_zamani: new Date().toISOString() })
+            .eq('id', adisyon.id)
+        }
       } else {
         tamamlandiDiv.style.display = 'none'
+        if (kalan > 0) {
+          hepsiniOdeBtn.style.display = 'block'
+          hepsiniOdeBtn.innerHTML = 'Hepsini Öde (' + kalan.toFixed(2) + '₺)'
+          hepsiniOdeBtn.onclick = async () => {
+            if (!confirm('Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ' + kalan.toFixed(2) + '₺')) return
+            
+            hepsiniOdeBtn.disabled = true
+            hepsiniOdeBtn.innerHTML = 'Ödeniyor...'
+
+            const odenmemisKalemler = kalemler.filter(k => !k.odendi_mi)
+
+            // Tek bir ödeme kaydı: toplam tutarda
+            const { error: odemeHata } = await supabase
+              .from('odemeler')
+              .insert({
+                adisyon_id: adisyon.id,
+                tutar: kalan,
+                durum: 'basarili'
+              })
+
+            if (odemeHata) {
+              alert('Ödeme yapılamadı: ' + odemeHata.message)
+              hepsiniOdeBtn.disabled = false
+              return
+            }
+
+            // Tüm ödenmemiş kalemleri ödendi yap
+            const kalemIdleri = odenmemisKalemler.map(k => k.id)
+            const { error: updateHata } = await supabase
+              .from('adisyon_kalemleri')
+              .update({ odendi_mi: true })
+              .in('id', kalemIdleri)
+
+            if (updateHata) {
+              alert('Kalem güncellenemedi: ' + updateHata.message)
+              return
+            }
+
+            adisyonGetir()
+          }
+        } else {
+          hepsiniOdeBtn.style.display = 'none'
+        }
       }
 
       // 8. Kalemleri ekrana yaz
