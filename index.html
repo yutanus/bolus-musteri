@@ -45,12 +45,28 @@
       padding: 15px;
       border-radius: 10px;
       margin-bottom: 10px;
+    }
+    .kalem.tamamen-odendi {
+      opacity: 0.5;
+    }
+    .kalem-ust {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 8px;
     }
-    .kalem.odendi {
-      opacity: 0.5;
+    .kalem-ad {
+      font-weight: 600;
+    }
+    .kalem-detay {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .kalem-alt {
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
     button {
       background: #007aff;
@@ -64,6 +80,28 @@
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+    button.adet-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      font-size: 18px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      color: #333;
+    }
+    button.adet-btn:disabled {
+      background: #f8f8f8;
+      color: #ccc;
+    }
+    .adet-sayi {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 600;
+    }
+    button.ode-btn {
+      flex: 1;
+      margin-left: 10px;
     }
     #tamamlandi {
       background: #34c759;
@@ -92,65 +130,48 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
+    let islemDevamEdiyor = false
+
     const urlParametreleri = new URLSearchParams(window.location.search)
     const qrKod = urlParametreleri.get('qr') || 'x7gh2km9pq'
+
+    // Her kalem için seçilen ödenecek adet (kullanıcı butonlarla artırıyor)
+    const secimler = {}
 
     async function adisyonGetir() {
       const adisyonBilgi = document.getElementById('adisyon-bilgi')
       const kalemlerDiv = document.getElementById('kalemler')
       const tamamlandiDiv = document.getElementById('tamamlandi')
 
-      // 1. Masayı bul
       const { data: masa, error: masaHata } = await supabase
-        .from('masalar')
-        .select('*')
-        .eq('qr_kod', qrKod)
-        .single()
+        .from('masalar').select('*').eq('qr_kod', qrKod).single()
 
       if (masaHata || !masa) {
         adisyonBilgi.innerHTML = 'Masa bulunamadı.'
         return
       }
 
-      // 2. Açık adisyonu bul
-      const { data: adisyon, error: adisyonHata } = await supabase
-        .from('adisyonlar')
-        .select('*')
-        .eq('masa_id', masa.id)
-        .eq('durum', 'acik')
-        .single()
+      const { data: adisyon } = await supabase
+        .from('adisyonlar').select('*')
+        .eq('masa_id', masa.id).eq('durum', 'acik').maybeSingle()
 
-      if (adisyonHata || !adisyon) {
+      if (!adisyon) {
         adisyonBilgi.innerHTML = 'Bu masada açık adisyon yok.'
+        kalemlerDiv.innerHTML = ''
+        document.getElementById('hepsini-ode-btn').style.display = 'none'
+        tamamlandiDiv.style.display = 'none'
         return
       }
 
-      // 3. Kalemleri çek
-      const { data: kalemler, error: kalemlerHata } = await supabase
-        .from('adisyon_kalemleri')
-        .select('*')
-        .eq('adisyon_id', adisyon.id)
-        .order('id', { ascending: true })
+      const { data: kalemler } = await supabase
+        .from('adisyon_kalemleri').select('*')
+        .eq('adisyon_id', adisyon.id).order('id', { ascending: true })
 
-      if (kalemlerHata) {
-        adisyonBilgi.innerHTML = 'Kalemler yüklenemedi: ' + kalemlerHata.message
-        return
-      }
-
-      // 4. Toplam ve ödenen hesapla
-      const toplam = kalemler.reduce((acc, k) => acc + Number(k.toplam), 0)
-      const odenen = kalemler.filter(k => k.odendi_mi).reduce((acc, k) => acc + Number(k.toplam), 0)
+      // Hesaplamalar
+      const toplam = kalemler.reduce((acc, k) => acc + Number(k.birim_fiyat) * k.adet, 0)
+      const odenen = kalemler.reduce((acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0)
       const kalan = toplam - odenen
 
-      // 5. Adisyonda toplam_tutar yanlışsa düzelt
-      if (Number(adisyon.toplam_tutar) !== toplam) {
-        await supabase
-          .from('adisyonlar')
-          .update({ toplam_tutar: toplam })
-          .eq('id', adisyon.id)
-      }
-
-      // 6. Bilgi kutusunu doldur
       adisyonBilgi.innerHTML = `
         <div class="baslik">${masa.numara}</div>
         <div class="satir"><span>Toplam:</span><span>${toplam.toFixed(2)}₺</span></div>
@@ -158,15 +179,14 @@
         <div class="kalan satir"><span>Kalan:</span><span>${kalan.toFixed(2)}₺</span></div>
       `
 
-     const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
+      const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
 
       if (kalan === 0 && kalemler.length > 0) {
         tamamlandiDiv.style.display = 'block'
         hepsiniOdeBtn.style.display = 'none'
 
         if (adisyon.durum === 'acik') {
-          await supabase
-            .from('adisyonlar')
+          await supabase.from('adisyonlar')
             .update({ durum: 'odendi', kapanis_zamani: new Date().toISOString() })
             .eq('id', adisyon.id)
         }
@@ -175,100 +195,158 @@
         if (kalan > 0) {
           hepsiniOdeBtn.style.display = 'block'
           hepsiniOdeBtn.innerHTML = 'Hepsini Öde (' + kalan.toFixed(2) + '₺)'
-          hepsiniOdeBtn.onclick = async () => {
-            if (!confirm('Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ' + kalan.toFixed(2) + '₺')) return
-            
-            hepsiniOdeBtn.disabled = true
-            hepsiniOdeBtn.innerHTML = 'Ödeniyor...'
-
-            const odenmemisKalemler = kalemler.filter(k => !k.odendi_mi)
-
-            // Tek bir ödeme kaydı: toplam tutarda
-            const { error: odemeHata } = await supabase
-              .from('odemeler')
-              .insert({
-                adisyon_id: adisyon.id,
-                tutar: kalan,
-                durum: 'basarili'
-              })
-
-            if (odemeHata) {
-              alert('Ödeme yapılamadı: ' + odemeHata.message)
-              hepsiniOdeBtn.disabled = false
-              return
-            }
-
-            // Tüm ödenmemiş kalemleri ödendi yap
-            const kalemIdleri = odenmemisKalemler.map(k => k.id)
-            const { error: updateHata } = await supabase
-              .from('adisyon_kalemleri')
-              .update({ odendi_mi: true })
-              .in('id', kalemIdleri)
-
-            if (updateHata) {
-              alert('Kalem güncellenemedi: ' + updateHata.message)
-              return
-            }
-
-            adisyonGetir()
-          }
+          hepsiniOdeBtn.onclick = () => hepsiniOde(adisyon.id, kalemler, kalan)
         } else {
           hepsiniOdeBtn.style.display = 'none'
         }
       }
 
-      // 8. Kalemleri ekrana yaz
+      // Kalemleri çiz
       kalemlerDiv.innerHTML = ''
       kalemler.forEach(kalem => {
-        const satir = document.createElement('div')
-        satir.className = kalem.odendi_mi ? 'kalem odendi' : 'kalem'
+        const kalanAdet = kalem.adet - kalem.odenmis_adet
+        const tamamenOdendi = kalanAdet === 0
+        const birimFiyat = Number(kalem.birim_fiyat)
 
-        const yazi = document.createElement('span')
-        yazi.innerHTML = kalem.urun_adi + ' - ' + Number(kalem.toplam).toFixed(2) + '₺'
-        satir.appendChild(yazi)
-
-        const buton = document.createElement('button')
-        buton.innerHTML = kalem.odendi_mi ? 'Ödendi' : 'Bu kalemi öde'
-        buton.disabled = kalem.odendi_mi
-
-        buton.onclick = async () => {
-          buton.disabled = true
-          buton.innerHTML = 'Ödeniyor...'
-
-          // A. Önce ödeme kaydı oluştur
-          const { error: odemeHata } = await supabase
-            .from('odemeler')
-            .insert({
-              adisyon_id: adisyon.id,
-              tutar: kalem.toplam,
-              durum: 'basarili'
-            })
-
-          if (odemeHata) {
-            alert('Ödeme kaydı oluşturulamadı: ' + odemeHata.message)
-            buton.disabled = false
-            buton.innerHTML = 'Bu kalemi öde'
-            return
-          }
-
-          // B. Sonra kalemi ödendi yap
-          const { error: kalemHata } = await supabase
-            .from('adisyon_kalemleri')
-            .update({ odendi_mi: true })
-            .eq('id', kalem.id)
-
-          if (kalemHata) {
-            alert('Kalem güncellenemedi: ' + kalemHata.message)
-            return
-          }
-
-          // C. Sayfayı yenile
-          adisyonGetir()
+        // Bu kalem için seçili adet (başlangıç: kalanAdet ise 1, değilse 0)
+        if (secimler[kalem.id] === undefined || secimler[kalem.id] > kalanAdet) {
+          secimler[kalem.id] = kalanAdet > 0 ? 1 : 0
         }
 
-        satir.appendChild(buton)
+        const satir = document.createElement('div')
+        satir.className = tamamenOdendi ? 'kalem tamamen-odendi' : 'kalem'
+
+        const odenmisYazi = kalem.odenmis_adet > 0 
+          ? ` (${kalem.odenmis_adet}/${kalem.adet} ödendi)` 
+          : ''
+
+        if (tamamenOdendi) {
+          satir.innerHTML = `
+            <div class="kalem-ust">
+              <div>
+                <div class="kalem-ad">${kalem.urun_adi} × ${kalem.adet}</div>
+                <div class="kalem-detay">Tamamen ödendi ✓</div>
+              </div>
+              <div>${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
+            </div>
+          `
+        } else {
+          const secili = secimler[kalem.id]
+          const odenecekTutar = (birimFiyat * secili).toFixed(2)
+          
+          satir.innerHTML = `
+            <div class="kalem-ust">
+              <div>
+                <div class="kalem-ad">${kalem.urun_adi} × ${kalem.adet}</div>
+                <div class="kalem-detay">${birimFiyat.toFixed(2)}₺/adet${odenmisYazi}</div>
+              </div>
+              <div>${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
+            </div>
+            <div class="kalem-alt">
+              <button class="adet-btn" data-aksiyon="azalt" data-kalem-id="${kalem.id}" ${secili <= 1 ? 'disabled' : ''}>−</button>
+              <span class="adet-sayi">${secili}</span>
+              <button class="adet-btn" data-aksiyon="arttir" data-kalem-id="${kalem.id}" ${secili >= kalanAdet ? 'disabled' : ''}>+</button>
+              <button class="ode-btn" data-aksiyon="ode" data-kalem-id="${kalem.id}">${secili} adet öde (${odenecekTutar}₺)</button>
+            </div>
+          `
+        }
+
         kalemlerDiv.appendChild(satir)
       })
+
+      // Butonlara olay bağla
+      document.querySelectorAll('[data-aksiyon]').forEach(btn => {
+        btn.onclick = () => butonAksiyon(btn, adisyon.id, kalemler)
+      })
+    }
+
+    function butonAksiyon(btn, adisyonId, kalemler) {
+      const aksiyon = btn.getAttribute('data-aksiyon')
+      const kalemId = Number(btn.getAttribute('data-kalem-id'))
+      const kalem = kalemler.find(k => k.id === kalemId)
+      const kalanAdet = kalem.adet - kalem.odenmis_adet
+
+      if (aksiyon === 'arttir') {
+        if (secimler[kalemId] < kalanAdet) secimler[kalemId]++
+        adisyonGetir()
+      } else if (aksiyon === 'azalt') {
+        if (secimler[kalemId] > 1) secimler[kalemId]--
+        adisyonGetir()
+      } else if (aksiyon === 'ode') {
+        kismiOde(adisyonId, kalem, secimler[kalemId])
+      }
+    }
+
+    async function kismiOde(adisyonId, kalem, adet) {
+      if (islemDevamEdiyor) return
+      islemDevamEdiyor = true
+
+      const birimFiyat = Number(kalem.birim_fiyat)
+      const tutar = birimFiyat * adet
+
+      const { error: odemeHata } = await supabase
+        .from('odemeler')
+        .insert({ adisyon_id: adisyonId, tutar: tutar, durum: 'basarili' })
+
+      if (odemeHata) {
+        alert('Ödeme hatası: ' + odemeHata.message)
+        islemDevamEdiyor = false
+        return
+      }
+
+      const yeniOdenmisAdet = kalem.odenmis_adet + adet
+
+      const { error: updateHata } = await supabase
+        .from('adisyon_kalemleri')
+        .update({ odenmis_adet: yeniOdenmisAdet })
+        .eq('id', kalem.id)
+
+      if (updateHata) {
+        alert('Güncelleme hatası: ' + updateHata.message)
+        islemDevamEdiyor = false
+        return
+      }
+
+      delete secimler[kalem.id]
+      islemDevamEdiyor = false
+      adisyonGetir()
+    }
+
+    async function hepsiniOde(adisyonId, kalemler, kalan) {
+      if (islemDevamEdiyor) return
+      islemDevamEdiyor = true
+
+      if (!confirm('Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ' + kalan.toFixed(2) + '₺')) {
+        islemDevamEdiyor = false
+        return
+      }
+
+      const { error: odemeHata } = await supabase
+        .from('odemeler')
+        .insert({ adisyon_id: adisyonId, tutar: kalan, durum: 'basarili' })
+
+      if (odemeHata) {
+        alert('Ödeme hatası: ' + odemeHata.message)
+        islemDevamEdiyor = false
+        return
+      }
+
+      // Her kalem için odenmis_adet = adet yap
+      const yarimKalemler = kalemler.filter(k => k.odenmis_adet < k.adet)
+      for (const k of yarimKalemler) {
+        const { error } = await supabase
+          .from('adisyon_kalemleri')
+          .update({ odenmis_adet: k.adet })
+          .eq('id', k.id)
+        if (error) {
+          alert('Güncelleme hatası: ' + error.message)
+          islemDevamEdiyor = false
+          return
+        }
+      }
+
+      islemDevamEdiyor = false
+      adisyonGetir()
     }
 
     adisyonGetir()

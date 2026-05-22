@@ -369,26 +369,38 @@
         .eq('adisyon_id', adisyon.id)
         .order('id', { ascending: true })
 
-      const toplam = (kalemler || []).reduce((acc, k) => acc + Number(k.toplam), 0)
-      const odenen = (kalemler || []).filter(k => k.odendi_mi).reduce((acc, k) => acc + Number(k.toplam), 0)
-      const kalan = toplam - odenen
+      const toplam = (kalemler || []).reduce((acc, k) => acc + Number(k.birim_fiyat) * k.adet, 0)
+const odenen = (kalemler || []).reduce((acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0)
+const kalan = toplam - odenen
 
       let kalemlerHtml = ''
       if (kalemler && kalemler.length > 0) {
         kalemler.forEach(k => {
-          const silButonu = k.odendi_mi 
-            ? '' 
-            : `<button class="sil-btn" data-kalem-id="${k.id}">×</button>`
-          kalemlerHtml += `
-            <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
-              <span>${k.urun_adi} × ${k.adet}</span>
-              <span style="display: flex; align-items: center; gap: 10px;">
-                <span>${Number(k.toplam).toFixed(2)}₺ ${k.odendi_mi ? '✓' : ''}</span>
-                ${silButonu}
-              </span>
-            </div>
-          `
-        })
+  // Kısmen ödenmişse silinemez (sadece hiç ödenmemişse silinebilir)
+  const silButonu = k.odenmis_adet > 0
+    ? '' 
+    : `<button class="sil-btn" data-kalem-id="${k.id}">×</button>`
+  
+  let durumYazi = ''
+  if (k.odendi_mi) {
+    durumYazi = '✓ Tamamen ödendi'
+  } else if (k.odenmis_adet > 0) {
+    durumYazi = `${k.odenmis_adet}/${k.adet} ödendi`
+  }
+  
+  kalemlerHtml += `
+    <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
+      <div>
+        <div>${k.urun_adi} × ${k.adet}</div>
+        ${durumYazi ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">${durumYazi}</div>` : ''}
+      </div>
+      <span style="display: flex; align-items: center; gap: 10px;">
+        <span>${Number(k.toplam).toFixed(2)}₺</span>
+        ${silButonu}
+      </span>
+    </div>
+  `
+})
       } else {
         kalemlerHtml = '<p style="color: #888;">Henüz ürün eklenmedi.</p>'
       }
