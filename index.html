@@ -112,6 +112,32 @@
       font-weight: bold;
       display: none;
     }
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 90%;
+      text-align: center;
+    }
+    #toast.gozuk {
+      opacity: 1;
+    }
+    #toast.hata {
+      background: #ff3b30;
+    }
+    #toast.basari {
+      background: #34c759;
+    }
   </style>
 </head>
 <body>
@@ -120,6 +146,7 @@
   <div id="adisyon-bilgi">Yükleniyor...</div>
   <div id="kalemler"></div>
   <button id="hepsini-ode-btn" style="display: none; background: #34c759; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; cursor: pointer; width: 100%; margin-bottom: 15px;">Hepsini Öde</button>
+  <div id="toast"></div>
   <div id="tamamlandi">Tüm hesap ödendi. Teşekkürler!</div>
 
   <script type="module">
@@ -131,6 +158,15 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
     let islemDevamEdiyor = false
+
+    function toastGoster(mesaj, tip) {
+      const toast = document.getElementById('toast')
+      toast.className = 'gozuk ' + (tip || 'basari')
+      toast.innerHTML = mesaj
+      setTimeout(() => {
+        toast.className = ''
+      }, 3000)
+    }
 
     const urlParametreleri = new URLSearchParams(window.location.search)
     const qrKod = urlParametreleri.get('qr') || 'x7gh2km9pq'
@@ -289,7 +325,7 @@
         .insert({ adisyon_id: adisyonId, tutar: tutar, durum: 'basarili' })
 
       if (odemeHata) {
-        alert('Ödeme hatası: ' + odemeHata.message)
+        toastGoster('Ödeme hatası: ' + odemeHata.message, 'hata')
         islemDevamEdiyor = false
         return
       }
@@ -302,7 +338,7 @@
         .eq('id', kalem.id)
 
       if (updateHata) {
-        alert('Güncelleme hatası: ' + updateHata.message)
+        toastGoster('Güncelleme hatası: ' + updateHata.message, 'hata')
         islemDevamEdiyor = false
         return
       }
@@ -326,7 +362,7 @@
         .insert({ adisyon_id: adisyonId, tutar: kalan, durum: 'basarili' })
 
       if (odemeHata) {
-        alert('Ödeme hatası: ' + odemeHata.message)
+        toastGoster('Ödeme hatası: ' + odemeHata.message, 'hata')
         islemDevamEdiyor = false
         return
       }
@@ -339,7 +375,7 @@
           .update({ odenmis_adet: k.adet })
           .eq('id', k.id)
         if (error) {
-          alert('Güncelleme hatası: ' + error.message)
+          toastGoster('Güncelleme hatası: ' + error.message, 'hata')
           islemDevamEdiyor = false
           return
         }

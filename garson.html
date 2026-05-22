@@ -164,26 +164,28 @@
       font-size: 18px;
       font-weight: bold;
     }
+    .zaman-bilgi {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- EKRAN 1: GİRİŞ -->
   <div id="ekran-giris" class="ekran aktif">
     <h1>Bölüş - Garson</h1>
     <div class="kart">
       <label for="email">Email</label>
       <input type="email" id="email" placeholder="garson1@bolus.local">
-
       <label for="sifre">Şifre</label>
       <input type="password" id="sifre" placeholder="••••••••">
-
       <button id="giris-btn">Giriş</button>
       <div id="mesaj"></div>
     </div>
   </div>
 
-  <!-- EKRAN 2: MASA LİSTESİ -->
   <div id="ekran-masalar" class="ekran">
     <div class="baslik">
       <span class="karsilama" id="karsilama">Hoş geldin</span>
@@ -193,13 +195,11 @@
     <div id="masa-listesi"></div>
   </div>
 
-  <!-- EKRAN 3: ADİSYON -->
   <div id="ekran-adisyon" class="ekran">
     <div class="baslik">
       <button class="geri kucuk" id="geri-btn">← Masalar</button>
       <span class="karsilama" id="masa-basligi"></span>
     </div>
-
     <div id="adisyon-icerik"></div>
   </div>
 
@@ -219,7 +219,20 @@
       document.getElementById(ekranId).classList.add('aktif')
     }
 
-    // ----- GİRİŞ -----
+    // ----- ZAMAN FARKI YARDIMCISI -----
+    function zamanFarki(tarihStr) {
+      const tarih = new Date(tarihStr)
+      const simdi = new Date()
+      const farkSn = Math.floor((simdi - tarih) / 1000)
+      const farkDk = Math.floor(farkSn / 60)
+      const farkSt = Math.floor(farkDk / 60)
+      if (farkSn < 60) return 'az önce'
+      if (farkDk < 60) return farkDk + ' dakika önce'
+      if (farkSt < 24) return farkSt + ' saat önce'
+      const farkGn = Math.floor(farkSt / 24)
+      return farkGn + ' gün önce'
+    }
+
     const girisBtn = document.getElementById('giris-btn')
     const mesaj = document.getElementById('mesaj')
 
@@ -236,10 +249,7 @@
       girisBtn.disabled = true
       girisBtn.innerHTML = 'Giriş yapılıyor...'
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: sifre
-      })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: sifre })
 
       if (error) {
         mesaj.className = 'hata'
@@ -250,10 +260,7 @@
       }
 
       const { data: garson, error: garsonHata } = await supabase
-        .from('garsonlar')
-        .select('*')
-        .eq('id', data.user.id)
-        .single()
+        .from('garsonlar').select('*').eq('id', data.user.id).single()
 
       if (garsonHata || !garson) {
         mesaj.className = 'hata'
@@ -275,29 +282,27 @@
       masalariYukle()
     }
 
-    // ----- ÇIKIŞ -----
+    // ----- ÇIKIŞ (onayla) -----
     document.getElementById('cikis-btn').onclick = async () => {
+      if (!confirm('Çıkış yapmak istediğine emin misin?')) return
       await supabase.auth.signOut()
       garsonBilgi = null
       secilenMasa = null
       ekranGoster('ekran-giris')
     }
 
-    // ----- GERİ -----
     document.getElementById('geri-btn').onclick = () => {
       secilenMasa = null
       ekranGoster('ekran-masalar')
       masalariYukle()
     }
 
-    // ----- MASA LİSTESİ -----
     async function masalariYukle() {
       const liste = document.getElementById('masa-listesi')
       liste.innerHTML = 'Yükleniyor...'
 
       const { data: masalar, error } = await supabase
-        .from('masalar')
-        .select('*')
+        .from('masalar').select('*')
         .eq('restoran_id', garsonBilgi.restoran_id)
         .order('id', { ascending: true })
 
@@ -308,26 +313,49 @@
 
       const { data: adisyonlar } = await supabase
         .from('adisyonlar')
-        .select('masa_id')
+        .select('id, masa_id, toplam_tutar, adisyon_kalemleri(birim_fiyat, odenmis_adet)')
         .eq('durum', 'acik')
 
-      const acikMasaIdleri = new Set((adisyonlar || []).map(a => a.masa_id))
+      const adisyonBilgileri = {}
+      ;(adisyonlar || []).forEach(a => {
+        const odenen = (a.adisyon_kalemleri || []).reduce(
+          (acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0
+        )
+        adisyonBilgileri[a.masa_id] = {
+          toplam: Number(a.toplam_tutar),
+          odenen: odenen,
+          kalan: Number(a.toplam_tutar) - odenen
+        }
+      })
 
       liste.innerHTML = ''
       masalar.forEach(masa => {
         const kart = document.createElement('div')
         kart.className = 'masa-karti'
-        const acikMi = acikMasaIdleri.has(masa.id)
-        kart.innerHTML = `
-          <span><strong>${masa.numara}</strong></span>
-          <span class="${acikMi ? 'durum-acik' : 'durum-bos'}">${acikMi ? 'Adisyon Açık' : 'Boş'}</span>
-        `
+        const bilgi = adisyonBilgileri[masa.id]
+
+        if (bilgi) {
+          kart.innerHTML = `
+            <div>
+              <div><strong>${masa.numara}</strong></div>
+              <div style="font-size: 12px; color: #888; margin-top: 4px;">
+                Toplam: ${bilgi.toplam.toFixed(2)}₺ · Kalan: ${bilgi.kalan.toFixed(2)}₺
+              </div>
+            </div>
+            <span class="durum-acik">Adisyon Açık</span>
+          `
+        } else {
+          kart.innerHTML = `
+            <span><strong>${masa.numara}</strong></span>
+            <span class="durum-bos">Boş</span>
+          `
+        }
+
         kart.onclick = () => masaSec(masa)
         liste.appendChild(kart)
       })
     }
 
-    // ----- MASA SEÇİLDİ -----
     async function masaSec(masa) {
       secilenMasa = masa
       document.getElementById('masa-basligi').innerHTML = masa.numara
@@ -335,17 +363,13 @@
       adisyonuYukle()
     }
 
-    // ----- ADİSYONU YÜKLE -----
     async function adisyonuYukle() {
       const icerik = document.getElementById('adisyon-icerik')
       icerik.innerHTML = 'Yükleniyor...'
 
       const { data: adisyon, error: adisyonHata } = await supabase
-        .from('adisyonlar')
-        .select('*')
-        .eq('masa_id', secilenMasa.id)
-        .eq('durum', 'acik')
-        .maybeSingle()
+        .from('adisyonlar').select('*')
+        .eq('masa_id', secilenMasa.id).eq('durum', 'acik').maybeSingle()
 
       if (adisyonHata) {
         icerik.innerHTML = 'Hata: ' + adisyonHata.message
@@ -364,43 +388,40 @@
       }
 
       const { data: kalemler } = await supabase
-        .from('adisyon_kalemleri')
-        .select('*')
-        .eq('adisyon_id', adisyon.id)
-        .order('id', { ascending: true })
+        .from('adisyon_kalemleri').select('*')
+        .eq('adisyon_id', adisyon.id).order('id', { ascending: true })
 
       const toplam = (kalemler || []).reduce((acc, k) => acc + Number(k.birim_fiyat) * k.adet, 0)
-const odenen = (kalemler || []).reduce((acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0)
-const kalan = toplam - odenen
+      const odenen = (kalemler || []).reduce((acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0)
+      const kalan = toplam - odenen
 
       let kalemlerHtml = ''
       if (kalemler && kalemler.length > 0) {
         kalemler.forEach(k => {
-  // Kısmen ödenmişse silinemez (sadece hiç ödenmemişse silinebilir)
-  const silButonu = k.odenmis_adet > 0
-    ? '' 
-    : `<button class="sil-btn" data-kalem-id="${k.id}">×</button>`
-  
-  let durumYazi = ''
-  if (k.odendi_mi) {
-    durumYazi = '✓ Tamamen ödendi'
-  } else if (k.odenmis_adet > 0) {
-    durumYazi = `${k.odenmis_adet}/${k.adet} ödendi`
-  }
-  
-  kalemlerHtml += `
-    <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
-      <div>
-        <div>${k.urun_adi} × ${k.adet}</div>
-        ${durumYazi ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">${durumYazi}</div>` : ''}
-      </div>
-      <span style="display: flex; align-items: center; gap: 10px;">
-        <span>${Number(k.toplam).toFixed(2)}₺</span>
-        ${silButonu}
-      </span>
-    </div>
-  `
-})
+          const silButonu = k.odenmis_adet > 0
+            ? ''
+            : `<button class="sil-btn" data-kalem-id="${k.id}">×</button>`
+
+          let durumYazi = ''
+          if (k.odendi_mi) {
+            durumYazi = '✓ Tamamen ödendi'
+          } else if (k.odenmis_adet > 0) {
+            durumYazi = `${k.odenmis_adet}/${k.adet} ödendi`
+          }
+
+          kalemlerHtml += `
+            <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
+              <div>
+                <div>${k.urun_adi} × ${k.adet}</div>
+                ${durumYazi ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">${durumYazi}</div>` : ''}
+              </div>
+              <span style="display: flex; align-items: center; gap: 10px;">
+                <span>${(Number(k.birim_fiyat) * k.adet).toFixed(2)}₺</span>
+                ${silButonu}
+              </span>
+            </div>
+          `
+        })
       } else {
         kalemlerHtml = '<p style="color: #888;">Henüz ürün eklenmedi.</p>'
       }
@@ -409,7 +430,11 @@ const kalan = toplam - odenen
         <div class="toplam-kutu">
           Toplam: ${toplam.toFixed(2)}₺<br>
           <small style="font-weight: normal; font-size: 14px;">Ödenen: ${odenen.toFixed(2)}₺ · Kalan: ${kalan.toFixed(2)}₺</small>
-        </div> <button id="adisyon-kapat-btn" style="background: #ff9500; margin-bottom: 15px;">Adisyonu Kapat</button>
+        </div>
+
+        <div class="zaman-bilgi">Adisyon ${zamanFarki(adisyon.acilis_zamani)} açıldı</div>
+
+        <button id="adisyon-kapat-btn" style="background: #ff9500; margin-bottom: 15px;">Adisyonu Kapat</button>
 
         <div>${kalemlerHtml}</div>
 
@@ -434,18 +459,12 @@ const kalan = toplam - odenen
         </div>
       `
 
-      // Sil butonlarına olay bağla
       document.querySelectorAll('.sil-btn').forEach(btn => {
         btn.onclick = async () => {
           const kalemId = btn.getAttribute('data-kalem-id')
-          if (!confirm('Bu kalemi silmek istediğine emin misin?')) {
-            return
-          }
+          if (!confirm('Bu kalemi silmek istediğine emin misin?')) return
           btn.disabled = true
-          const { error } = await supabase
-            .from('adisyon_kalemleri')
-            .delete()
-            .eq('id', kalemId)
+          const { error } = await supabase.from('adisyon_kalemleri').delete().eq('id', kalemId)
           if (error) {
             alert('Silinemedi: ' + error.message)
             btn.disabled = false
@@ -456,11 +475,12 @@ const kalan = toplam - odenen
       })
 
       document.getElementById('urun-ekle-btn').onclick = () => urunEkle(adisyon.id)
+
       document.getElementById('adisyon-kapat-btn').onclick = async () => {
-        const onayMesaj = kalan > 0 
+        const onayMesaj = kalan > 0
           ? `Hala ${kalan.toFixed(2)}₺ ödenmemiş. Yine de adisyonu kapatmak istiyor musun?`
           : 'Adisyonu kapatmak istediğine emin misin?'
-        
+
         if (!confirm(onayMesaj)) return
 
         const { error } = await supabase
@@ -479,21 +499,15 @@ const kalan = toplam - odenen
       }
     }
 
-    // ----- YENİ ADİSYON AÇ -----
     async function yeniAdisyonAc() {
-      const { error } = await supabase
-        .from('adisyonlar')
-        .insert({ masa_id: secilenMasa.id })
-
+      const { error } = await supabase.from('adisyonlar').insert({ masa_id: secilenMasa.id })
       if (error) {
         alert('Adisyon açılamadı: ' + error.message)
         return
       }
-
       adisyonuYukle()
     }
 
-    // ----- ÜRÜN EKLE -----
     async function urunEkle(adisyonId) {
       const urunAdi = document.getElementById('urun-adi').value.trim()
       const birimFiyat = Number(document.getElementById('birim-fiyat').value)
@@ -507,20 +521,17 @@ const kalan = toplam - odenen
       }
 
       const toplam = birimFiyat * adet
-
       const ekleBtn = document.getElementById('urun-ekle-btn')
       ekleBtn.disabled = true
       ekleBtn.innerHTML = 'Ekleniyor...'
 
-      const { error } = await supabase
-        .from('adisyon_kalemleri')
-        .insert({
-          adisyon_id: adisyonId,
-          urun_adi: urunAdi,
-          birim_fiyat: birimFiyat,
-          adet: adet,
-          toplam: toplam
-        })
+      const { error } = await supabase.from('adisyon_kalemleri').insert({
+        adisyon_id: adisyonId,
+        urun_adi: urunAdi,
+        birim_fiyat: birimFiyat,
+        adet: adet,
+        toplam: toplam
+      })
 
       if (error) {
         adisyonMesaj.className = 'hata'
@@ -530,7 +541,6 @@ const kalan = toplam - odenen
         return
       }
 
-      // Trigger toplam_tutar'ı otomatik güncelliyor, JS'in yapması gerekmiyor
       adisyonuYukle()
     }
   </script>
