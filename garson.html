@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bölüş - Garson</title>
+  <style>
+    body {
+      font-family: -apple-system, sans-serif;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .ekran {
+      display: none;
+    }
+    .ekran.aktif {
+      display: block;
+    }
+    .kart {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      background: #007aff;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+    button.cikis {
+      background: #ff3b30;
+    }
+    button.geri {
+      background: #8e8e93;
+    }
+    button.kucuk {
+      width: auto;
+      padding: 8px 16px;
+      margin: 0;
+      font-size: 14px;
+    }
+    .masa-karti {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .masa-karti:hover {
+      background: #eef6ff;
+    }
+    .durum-acik {
+      background: #ff9500;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .durum-bos {
+      background: #34c759;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .kalem-satir {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kalem-satir.odendi {
+      opacity: 0.5;
+    }
+    .form-satir {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .form-satir input {
+      margin-bottom: 0;
+    }
+    .form-satir input.kucuk {
+      flex: 0 0 80px;
+    }
+    #mesaj, #adisyon-mesaj {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      display: none;
+    }
+    .hata {
+      background: #ffe5e5;
+      color: #c00;
+      display: block !important;
+    }
+    .baslik {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .karsilama {
+      color: #555;
+      font-size: 14px;
+    }
+    .toplam-kutu {
+      background: #007aff;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- EKRAN 1: GİRİŞ -->
+  <div id="ekran-giris" class="ekran aktif">
+    <h1>Bölüş - Garson</h1>
+    <div class="kart">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="garson1@bolus.local">
+
+      <label for="sifre">Şifre</label>
+      <input type="password" id="sifre" placeholder="••••••••">
+
+      <button id="giris-btn">Giriş</button>
+      <div id="mesaj"></div>
+    </div>
+  </div>
+
+  <!-- EKRAN 2: MASA LİSTESİ -->
+  <div id="ekran-masalar" class="ekran">
+    <div class="baslik">
+      <span class="karsilama" id="karsilama">Hoş geldin</span>
+      <button class="cikis kucuk" id="cikis-btn">Çıkış</button>
+    </div>
+    <h1>Masalar</h1>
+    <div id="masa-listesi"></div>
+  </div>
+
+  <!-- EKRAN 3: ADİSYON -->
+  <div id="ekran-adisyon" class="ekran">
+    <div class="baslik">
+      <button class="geri kucuk" id="geri-btn">← Masalar</button>
+      <span class="karsilama" id="masa-basligi"></span>
+    </div>
+
+    <div id="adisyon-icerik"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const SUPABASE_URL = 'https://ybgzysyojshulpmdyrrm.supabase.co'
+    const SUPABASE_KEY = 'sb_publishable__y__ogbkSM4Y0QwFrE-UUQ_Eamnac2R'
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    let garsonBilgi = null
+    let secilenMasa = null
+
+    function ekranGoster(ekranId) {
+      document.querySelectorAll('.ekran').forEach(e => e.classList.remove('aktif'))
+      document.getElementById(ekranId).classList.add('aktif')
+    }
+
+    // ----- GİRİŞ -----
+    const girisBtn = document.getElementById('giris-btn')
+    const mesaj = document.getElementById('mesaj')
+
+    girisBtn.onclick = async () => {
+      const email = document.getElementById('email').value
+      const sifre = document.getElementById('sifre').value
+
+      if (!email || !sifre) {
+        mesaj.className = 'hata'
+        mesaj.innerHTML = 'Email ve şifre boş bırakılamaz.'
+        return
+      }
+
+      girisBtn.disabled = true
+      girisBtn.innerHTML = 'Giriş yapılıyor...'
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: sifre
+      })
+
+      if (error) {
+        mesaj.className = 'hata'
+        mesaj.innerHTML = 'Hata: ' + error.message
+        girisBtn.disabled = false
+        girisBtn.innerHTML = 'Giriş'
+        return
+      }
+
+      const { data: garson, error: garsonHata } = await supabase
+        .from('garsonlar')
+        .select('*')
+        .eq('id', data.user.id)
+        .single()
+
+      if (garsonHata || !garson) {
+        mesaj.className = 'hata'
+        mesaj.innerHTML = 'Bu kullanıcı garson kaydı bulunamadı.'
+        await supabase.auth.signOut()
+        girisBtn.disabled = false
+        girisBtn.innerHTML = 'Giriş'
+        return
+      }
+
+      garsonBilgi = garson
+      girisBtn.disabled = false
+      girisBtn.innerHTML = 'Giriş'
+      mesaj.className = ''
+      mesaj.innerHTML = ''
+
+      document.getElementById('karsilama').innerHTML = 'Hoş geldin, ' + garson.ad
+      ekranGoster('ekran-masalar')
+      masalariYukle()
+    }
+
+    // ----- ÇIKIŞ -----
+    document.getElementById('cikis-btn').onclick = async () => {
+      await supabase.auth.signOut()
+      garsonBilgi = null
+      secilenMasa = null
+      ekranGoster('ekran-giris')
+    }
+
+    // ----- GERİ (adisyondan masalara) -----
+    document.getElementById('geri-btn').onclick = () => {
+      secilenMasa = null
+      ekranGoster('ekran-masalar')
+      masalariYukle()
+    }
+
+    // ----- MASA LİSTESİ -----
+    async function masalariYukle() {
+      const liste = document.getElementById('masa-listesi')
+      liste.innerHTML = 'Yükleniyor...'
+
+      const { data: masalar, error } = await supabase
+        .from('masalar')
+        .select('*')
+        .eq('restoran_id', garsonBilgi.restoran_id)
+        .order('id', { ascending: true })
+
+      if (error) {
+        liste.innerHTML = 'Hata: ' + error.message
+        return
+      }
+
+      const { data: adisyonlar } = await supabase
+        .from('adisyonlar')
+        .select('masa_id')
+        .eq('durum', 'acik')
+
+      const acikMasaIdleri = new Set((adisyonlar || []).map(a => a.masa_id))
+
+      liste.innerHTML = ''
+      masalar.forEach(masa => {
+        const kart = document.createElement('div')
+        kart.className = 'masa-karti'
+        const acikMi = acikMasaIdleri.has(masa.id)
+        kart.innerHTML = `
+          <span><strong>${masa.numara}</strong></span>
+          <span class="${acikMi ? 'durum-acik' : 'durum-bos'}">${acikMi ? 'Adisyon Açık' : 'Boş'}</span>
+        `
+        kart.onclick = () => masaSec(masa)
+        liste.appendChild(kart)
+      })
+    }
+
+    // ----- MASA SEÇİLDİ -----
+    async function masaSec(masa) {
+      secilenMasa = masa
+      document.getElementById('masa-basligi').innerHTML = masa.numara
+      ekranGoster('ekran-adisyon')
+      adisyonuYukle()
+    }
+
+    // ----- ADİSYONU YÜKLE -----
+    async function adisyonuYukle() {
+      const icerik = document.getElementById('adisyon-icerik')
+      icerik.innerHTML = 'Yükleniyor...'
+
+      const { data: adisyon, error: adisyonHata } = await supabase
+        .from('adisyonlar')
+        .select('*')
+        .eq('masa_id', secilenMasa.id)
+        .eq('durum', 'acik')
+        .maybeSingle()
+
+      if (adisyonHata) {
+        icerik.innerHTML = 'Hata: ' + adisyonHata.message
+        return
+      }
+
+      if (!adisyon) {
+        // Açık adisyon yok, "Yeni Adisyon Aç" butonu göster
+        icerik.innerHTML = `
+          <div class="kart">
+            <p>Bu masada açık adisyon yok.</p>
+            <button id="yeni-adisyon-btn">Yeni Adisyon Aç</button>
+          </div>
+        `
+        document.getElementById('yeni-adisyon-btn').onclick = yeniAdisyonAc
+        return
+      }
+
+      // Açık adisyon var, kalemleri çek
+      const { data: kalemler } = await supabase
+        .from('adisyon_kalemleri')
+        .select('*')
+        .eq('adisyon_id', adisyon.id)
+        .order('id', { ascending: true })
+
+      const toplam = (kalemler || []).reduce((acc, k) => acc + Number(k.toplam), 0)
+      const odenen = (kalemler || []).filter(k => k.odendi_mi).reduce((acc, k) => acc + Number(k.toplam), 0)
+      const kalan = toplam - odenen
+
+      let kalemlerHtml = ''
+      if (kalemler && kalemler.length > 0) {
+        kalemler.forEach(k => {
+          kalemlerHtml += `
+            <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
+              <span>${k.urun_adi} × ${k.adet}</span>
+              <span>${Number(k.toplam).toFixed(2)}₺ ${k.odendi_mi ? '✓' : ''}</span>
+            </div>
+          `
+        })
+      } else {
+        kalemlerHtml = '<p style="color: #888;">Henüz ürün eklenmedi.</p>'
+      }
+
+      icerik.innerHTML = `
+        <div class="toplam-kutu">
+          Toplam: ${toplam.toFixed(2)}₺<br>
+          <small style="font-weight: normal; font-size: 14px;">Ödenen: ${odenen.toFixed(2)}₺ · Kalan: ${kalan.toFixed(2)}₺</small>
+        </div>
+
+        <div>${kalemlerHtml}</div>
+
+        <div class="kart" style="margin-top: 15px;">
+          <h3 style="margin-top: 0;">Ürün Ekle</h3>
+          <label>Ürün adı</label>
+          <input type="text" id="urun-adi" placeholder="Örn: Margarita Pizza">
+
+          <div class="form-satir">
+            <div style="flex: 1;">
+              <label>Fiyat (₺)</label>
+              <input type="number" id="birim-fiyat" placeholder="0">
+            </div>
+            <div style="flex: 0 0 100px;">
+              <label>Adet</label>
+              <input type="number" id="adet" value="1" min="1">
+            </div>
+          </div>
+
+          <button id="urun-ekle-btn">Ekle</button>
+          <div id="adisyon-mesaj"></div>
+        </div>
+      `
+
+      document.getElementById('urun-ekle-btn').onclick = () => urunEkle(adisyon.id)
+    }
+
+    // ----- YENİ ADİSYON AÇ -----
+    async function yeniAdisyonAc() {
+      const { error } = await supabase
+        .from('adisyonlar')
+        .insert({ masa_id: secilenMasa.id })
+
+      if (error) {
+        alert('Adisyon açılamadı: ' + error.message)
+        return
+      }
+
+      adisyonuYukle()
+    }
+
+    // ----- ÜRÜN EKLE -----
+    async function urunEkle(adisyonId) {
+      const urunAdi = document.getElementById('urun-adi').value.trim()
+      const birimFiyat = Number(document.getElementById('birim-fiyat').value)
+      const adet = Number(document.getElementById('adet').value)
+      const adisyonMesaj = document.getElementById('adisyon-mesaj')
+
+      if (!urunAdi || !birimFiyat || !adet || birimFiyat <= 0 || adet <= 0) {
+        adisyonMesaj.className = 'hata'
+        adisyonMesaj.innerHTML = 'Tüm alanları doğru doldur.'
+        return
+      }
+
+      const toplam = birimFiyat * adet
+
+      const ekleBtn = document.getElementById('urun-ekle-btn')
+      ekleBtn.disabled = true
+      ekleBtn.innerHTML = 'Ekleniyor...'
+
+      const { error } = await supabase
+        .from('adisyon_kalemleri')
+        .insert({
+          adisyon_id: adisyonId,
+          urun_adi: urunAdi,
+          birim_fiyat: birimFiyat,
+          adet: adet,
+          toplam: toplam
+        })
+
+      if (error) {
+        adisyonMesaj.className = 'hata'
+        adisyonMesaj.innerHTML = 'Hata: ' + error.message
+        ekleBtn.disabled = false
+        ekleBtn.innerHTML = 'Ekle'
+        return
+      }
+
+      // Adisyonun toplam_tutar'ını güncelle
+      const { data: tumKalemler } = await supabase
+        .from('adisyon_kalemleri')
+        .select('toplam')
+        .eq('adisyon_id', adisyonId)
+
+      const yeniToplam = (tumKalemler || []).reduce((a, k) => a + Number(k.toplam), 0)
+
+      await supabase
+        .from('adisyonlar')
+        .update({ toplam_tutar: yeniToplam })
+        .eq('id', adisyonId)
+
+      adisyonuYukle()
+    }
+  </script>
+
+</body>
+</html>
