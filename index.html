@@ -231,7 +231,7 @@
         if (kalan > 0) {
           hepsiniOdeBtn.style.display = 'block'
           hepsiniOdeBtn.innerHTML = 'Hepsini Öde (' + kalan.toFixed(2) + '₺)'
-          hepsiniOdeBtn.onclick = () => hepsiniOde(adisyon.id, kalemler, kalan)
+          hepsiniOdeBtn.onclick = () => hepsiniOde(adisyon.id, kalan)
         } else {
           hepsiniOdeBtn.style.display = 'none'
         }
@@ -313,6 +313,7 @@
       }
     }
 
+    // Tek kalemin secili adedini iyzico ile ode
     async function kismiOde(adisyonId, kalem, adet) {
       if (islemDevamEdiyor) return
       islemDevamEdiyor = true
@@ -320,35 +321,14 @@
       const birimFiyat = Number(kalem.birim_fiyat)
       const tutar = birimFiyat * adet
 
-      const { error: odemeHata } = await supabase
-        .from('odemeler')
-        .insert({ adisyon_id: adisyonId, tutar: tutar, durum: 'basarili' })
+      // Fis: "ITEM-<adisyon>-<kalem>-<adet>"
+      const fis = 'ITEM-' + adisyonId + '-' + kalem.id + '-' + adet
 
-      if (odemeHata) {
-        toastGoster('Ödeme hatası: ' + odemeHata.message, 'hata')
-        islemDevamEdiyor = false
-        return
-      }
-
-      const yeniOdenmisAdet = kalem.odenmis_adet + adet
-
-      const { error: updateHata } = await supabase
-        .from('adisyon_kalemleri')
-        .update({ odenmis_adet: yeniOdenmisAdet })
-        .eq('id', kalem.id)
-
-      if (updateHata) {
-        toastGoster('Güncelleme hatası: ' + updateHata.message, 'hata')
-        islemDevamEdiyor = false
-        return
-      }
-
-      delete secimler[kalem.id]
-      islemDevamEdiyor = false
-      adisyonGetir()
+      await odemeyeYonlen(fis, tutar)
     }
 
-    async function hepsiniOde(adisyonId, kalemler, kalan) {
+    // Tum adisyoni iyzico ile ode
+    async function hepsiniOde(adisyonId, kalan) {
       if (islemDevamEdiyor) return
       islemDevamEdiyor = true
 
@@ -357,32 +337,35 @@
         return
       }
 
-      const { error: odemeHata } = await supabase
-        .from('odemeler')
-        .insert({ adisyon_id: adisyonId, tutar: kalan, durum: 'basarili' })
+      // Fis: "FULL-<adisyon>"
+      const fis = 'FULL-' + adisyonId
 
-      if (odemeHata) {
-        toastGoster('Ödeme hatası: ' + odemeHata.message, 'hata')
-        islemDevamEdiyor = false
-        return
-      }
+      await odemeyeYonlen(fis, kalan)
+    }
 
-      // Her kalem için odenmis_adet = adet yap
-      const yarimKalemler = kalemler.filter(k => k.odenmis_adet < k.adet)
-      for (const k of yarimKalemler) {
-        const { error } = await supabase
-          .from('adisyon_kalemleri')
-          .update({ odenmis_adet: k.adet })
-          .eq('id', k.id)
-        if (error) {
-          toastGoster('Güncelleme hatası: ' + error.message, 'hata')
+    // Ortak: odeme-baslat'a istek at, iyzico sayfasina yonlendir
+    async function odemeyeYonlen(fis, tutar) {
+      try {
+        const cevap = await fetch('/api/odeme-baslat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fis: fis, tutar: tutar })
+        })
+
+        const veri = await cevap.json()
+
+        if (!veri.basarili || !veri.sonuc || !veri.sonuc.paymentPageUrl) {
+          toastGoster('Ödeme başlatılamadı, tekrar deneyin', 'hata')
           islemDevamEdiyor = false
           return
         }
-      }
 
-      islemDevamEdiyor = false
-      adisyonGetir()
+        // iyzico'nun guvenli odeme sayfasina yonlendir
+        window.location.href = veri.sonuc.paymentPageUrl
+      } catch (e) {
+        toastGoster('Baglanti hatasi: ' + e.message, 'hata')
+        islemDevamEdiyor = false
+      }
     }
 
     adisyonGetir()

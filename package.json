@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/yutanus/bolus-musteri#readme",
   "dependencies": {
+    "@supabase/supabase-js": "^2.107.0",
     "iyzipay": "^2.0.67"
   }
 }

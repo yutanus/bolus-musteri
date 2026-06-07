@@ -8,38 +8,71 @@ const iyzipay = new Iyzipay({
 });
 
 module.exports = function handler(request, response) {
-  // Simdilik sabit bir tutar — sonra adisyondan gelecek
-  const tutar = '100.0';
+  // Sadece POST kabul ediyoruz (tarayici bize body ile veri yolluyor)
+  if (request.method !== 'POST') {
+    response.status(405).json({ basarili: false, hata: 'Sadece POST' });
+    return;
+  }
+
+  // Tarayicidan gelen veri: odenecek tutar ve "fis" (odeme donusunde ne yapilacagini anlatan etiket)
+  // fis ornek: "FULL-21" (tum adisyon) veya "ITEM-21-45-2" (adisyon 21, kalem 45, 2 adet)
+  const body = request.body || {};
+  const fis = body.fis;
+  const gelenTutar = Number(body.tutar);
+
+  // Basit kontroller
+  if (!fis) {
+    response.status(400).json({ basarili: false, hata: 'fis eksik' });
+    return;
+  }
+  if (!gelenTutar || gelenTutar <= 0) {
+    response.status(400).json({ basarili: false, hata: 'Gecersiz tutar' });
+    return;
+  }
+
+  // iyzico tutari ondalikli metin bekliyor: 123.45 gibi
+  const fiyat = gelenTutar.toFixed(2);
+
+  // Geri donus adresini istegin geldigi yere gore otomatik kur
+  // (localhost'ta http, canli sitede https)
+  const host = request.headers.host;
+  const protokol = host.includes('localhost') ? 'http' : 'https';
+  const callbackUrl = protokol + '://' + host + '/api/odeme-sonuc';
+
+  // Musterinin IP'si (iyzico istiyor) — yoksa varsayilan koy
+  const ip = (request.headers['x-forwarded-for'] || '85.34.78.112').split(',')[0].trim();
 
   const istek = {
     locale: 'tr',
-    conversationId: 'test-' + Date.now(),
-    price: tutar,
-    paidPrice: tutar,
+    // VESTIYER FISI: odeme donusunde ne yapilacagini anlatan etiketi
+    // hem conversationId hem basketId'ye koyuyoruz (biri bos donerse otekini kullaniriz)
+    conversationId: fis,
+    price: fiyat,
+    paidPrice: fiyat,
     currency: 'TRY',
-    basketId: 'B1',
+    basketId: fis,
     paymentGroup: 'PRODUCT',
-    callbackUrl: 'http://localhost:3000/api/odeme-sonuc',
+    callbackUrl: callbackUrl,
     buyer: {
       id: 'MUSTERI1',
-      name: 'Test',
+      name: 'Bolus',
       surname: 'Musteri',
       gsmNumber: '+905350000000',
-      email: 'test@bolus.com',
+      email: 'musteri@bolus.com',
       identityNumber: '11111111111',
       registrationAddress: 'Eminonu, Istanbul',
       city: 'Istanbul',
       country: 'Turkey',
-      ip: '85.34.78.112'
+      ip: ip
     },
     shippingAddress: {
-      contactName: 'Test Musteri',
+      contactName: 'Bolus Musteri',
       city: 'Istanbul',
       country: 'Turkey',
       address: 'Eminonu, Istanbul'
     },
     billingAddress: {
-      contactName: 'Test Musteri',
+      contactName: 'Bolus Musteri',
       city: 'Istanbul',
       country: 'Turkey',
       address: 'Eminonu, Istanbul'
@@ -50,7 +83,7 @@ module.exports = function handler(request, response) {
         name: 'Hesap odemesi',
         category1: 'Restoran',
         itemType: 'VIRTUAL',
-        price: tutar
+        price: fiyat
       }
     ]
   };
