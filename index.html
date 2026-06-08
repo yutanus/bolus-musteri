@@ -4,150 +4,340 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bölüş - Hesabınız</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #f7f2ec;
+      --surface: #ffffff;
+      --ink: #1c2b3a;
+      --ink-soft: #6a7886;
+      --navy: #1b3a5b;
+      --navy-deep: #16314d;
+      --coral: #ef6f4c;
+      --coral-deep: #e05a36;
+      --green: #2f9e6b;
+      --line: #ece4d9;
+      --shadow: 0 4px 20px rgba(27, 58, 91, 0.07);
+      --shadow-soft: 0 2px 10px rgba(27, 58, 91, 0.05);
+      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+      --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, sans-serif;
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #f5f5f5;
+      font-family: var(--font-body);
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 18px 60px;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
-    h1 {
-      color: #333;
+
+    /* ---- Marka başlığı ---- */
+    .marka {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 4px;
     }
+    .marka-amblem { width: 34px; height: 34px; flex-shrink: 0; }
+    .marka-ad {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: -0.5px;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .marka-tagline {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin: 6px 0 22px;
+      font-weight: 500;
+    }
+
+    /* ---- Adisyon özet kartı ---- */
     #adisyon-bilgi {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      background: var(--surface);
+      padding: 22px;
+      border-radius: 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+      animation: yuksel 0.5s ease both;
     }
-    #adisyon-bilgi .baslik {
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 10px;
+    .ozet-masa {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
     }
-    #adisyon-bilgi .satir {
+    .ozet-kalan-etiket {
+      font-size: 14px;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .ozet-kalan-tutar {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 42px;
+      color: var(--navy);
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin: 2px 0 16px;
+    }
+    .ilerleme-ray {
+      height: 8px;
+      background: var(--line);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .ilerleme-dolu {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), #43b783);
+      border-radius: 99px;
+      width: 0;
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .ozet-satirlar {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 5px;
-      color: #555;
+      font-size: 14px;
+      color: var(--ink-soft);
+      font-weight: 500;
     }
-    #adisyon-bilgi .kalan {
-      color: #007aff;
-      font-weight: bold;
-      font-size: 16px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #eee;
+    .ozet-satirlar b { color: var(--ink); font-weight: 600; }
+
+    /* ---- Kalemler ---- */
+    .bolum-baslik {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin: 24px 4px 12px;
     }
     .kalem {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 10px;
+      background: var(--surface);
+      padding: 16px 18px;
+      border-radius: 16px;
+      margin-bottom: 11px;
+      box-shadow: var(--shadow-soft);
+      animation: yuksel 0.5s ease both;
     }
     .kalem.tamamen-odendi {
-      opacity: 0.5;
+      opacity: 0.6;
+      background: #fbf8f4;
+      box-shadow: none;
     }
     .kalem-ust {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+      align-items: flex-start;
+      gap: 12px;
     }
     .kalem-ad {
       font-weight: 600;
+      font-size: 16px;
+      color: var(--ink);
     }
     .kalem-detay {
       font-size: 13px;
-      color: #888;
-      margin-bottom: 8px;
+      color: var(--ink-soft);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+    .kalem-fiyat {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .kalem-rozet {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+      margin-top: 3px;
     }
     .kalem-alt {
       display: flex;
-      gap: 8px;
+      gap: 9px;
       align-items: center;
+      margin-top: 14px;
     }
-    button {
-      background: #007aff;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    button.adet-btn {
-      width: 32px;
-      height: 32px;
+
+    /* ---- Butonlar ---- */
+    button { font-family: var(--font-body); cursor: pointer; }
+
+    .adet-btn {
+      width: 38px;
+      height: 38px;
+      flex-shrink: 0;
       padding: 0;
-      font-size: 18px;
-      border-radius: 50%;
-      background: #f0f0f0;
-      color: #333;
-    }
-    button.adet-btn:disabled {
-      background: #f8f8f8;
-      color: #ccc;
-    }
-    .adet-sayi {
-      min-width: 28px;
-      text-align: center;
+      font-size: 20px;
       font-weight: 600;
+      border-radius: 50%;
+      background: #f1ece4;
+      color: var(--navy);
+      border: none;
+      transition: background 0.15s, transform 0.1s;
     }
-    button.ode-btn {
-      flex: 1;
-      margin-left: 10px;
-    }
-    #tamamlandi {
-      background: #34c759;
-      color: white;
-      padding: 20px;
-      border-radius: 10px;
+    .adet-btn:active:not(:disabled) { transform: scale(0.9); }
+    .adet-btn:disabled { color: #cfc7bc; background: #f6f2ec; cursor: not-allowed; }
+
+    .adet-sayi {
+      min-width: 26px;
       text-align: center;
-      font-weight: bold;
-      display: none;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--ink);
     }
+
+    .ode-btn {
+      flex: 1;
+      margin-left: 6px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .ode-btn:active { transform: scale(0.98); background: var(--navy-deep); }
+
+    #hepsini-ode-btn {
+      display: none;
+      width: 100%;
+      background: var(--coral);
+      color: #fff;
+      border: none;
+      padding: 17px;
+      border-radius: 15px;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 6px 0 4px;
+      box-shadow: 0 6px 18px rgba(239, 111, 76, 0.32);
+      transition: background 0.15s, transform 0.1s;
+    }
+    #hepsini-ode-btn:active { transform: scale(0.99); background: var(--coral-deep); }
+
+    /* ---- Güven notu ---- */
+    .guven-notu {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 22px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .guven-notu svg { flex-shrink: 0; }
+
+    /* ---- Tamamlandı ---- */
+    #tamamlandi {
+      display: none;
+      background: linear-gradient(135deg, var(--green), #38a878);
+      color: #fff;
+      padding: 28px 22px;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(47, 158, 107, 0.28);
+      animation: yuksel 0.5s ease both;
+    }
+    #tamamlandi .tik { font-size: 40px; line-height: 1; margin-bottom: 8px; }
+    #tamamlandi .baslik {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    #tamamlandi .alt { font-size: 14px; opacity: 0.92; font-weight: 500; }
+
+    /* ---- Durum mesajı ---- */
+    .durum-mesaj {
+      background: var(--surface);
+      padding: 30px 22px;
+      border-radius: 18px;
+      text-align: center;
+      color: var(--ink-soft);
+      font-weight: 500;
+      box-shadow: var(--shadow-soft);
+    }
+
+    /* ---- Toast ---- */
     #toast {
       position: fixed;
-      bottom: 30px;
+      bottom: 28px;
       left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: white;
-      padding: 14px 24px;
-      border-radius: 8px;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--ink);
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 12px;
       font-size: 14px;
+      font-weight: 500;
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.3s, transform 0.3s;
       pointer-events: none;
       z-index: 1000;
       max-width: 90%;
       text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
-    #toast.gozuk {
-      opacity: 1;
-    }
-    #toast.hata {
-      background: #ff3b30;
-    }
-    #toast.basari {
-      background: #34c759;
+    #toast.gozuk { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.hata { background: var(--coral-deep); }
+    #toast.basari { background: var(--green); }
+
+    @keyframes yuksel {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <h1>Hesabınız</h1>
-  <div id="adisyon-bilgi">Yükleniyor...</div>
+  <div class="marka">
+    <svg class="marka-amblem" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="20" cy="20" r="18" fill="#1b3a5b"/>
+      <path d="M20 4 A16 16 0 0 0 20 36 Z" fill="#ef6f4c"/>
+      <circle cx="20" cy="20" r="3.4" fill="#f7f2ec"/>
+    </svg>
+    <span class="marka-ad">Bölüş</span>
+  </div>
+  <div class="marka-tagline">Hesabını paylaş, payını öde.</div>
+
+  <div id="adisyon-bilgi"><div class="durum-mesaj">Yükleniyor...</div></div>
   <div id="kalemler"></div>
-  <button id="hepsini-ode-btn" style="display: none; background: #34c759; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; cursor: pointer; width: 100%; margin-bottom: 15px;">Hepsini Öde</button>
+  <button id="hepsini-ode-btn">Hepsini Öde</button>
+
+  <div id="tamamlandi">
+    <div class="tik">✓</div>
+    <div class="baslik">Hesap tamamen ödendi</div>
+    <div class="alt">Bizi tercih ettiğiniz için teşekkürler!</div>
+  </div>
+
+  <div class="guven-notu">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6a7886" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    <span>iyzico ile güvenli ödeme</span>
+  </div>
+
   <div id="toast"></div>
-  <div id="tamamlandi">Tüm hesap ödendi. Teşekkürler!</div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -183,7 +373,7 @@
         .from('masalar').select('*').eq('qr_kod', qrKod).single()
 
       if (masaHata || !masa) {
-        adisyonBilgi.innerHTML = 'Masa bulunamadı.'
+        adisyonBilgi.innerHTML = '<div class="durum-mesaj">Masa bulunamadı.</div>'
         return
       }
 
@@ -192,7 +382,7 @@
         .eq('masa_id', masa.id).eq('durum', 'acik').maybeSingle()
 
       if (!adisyon) {
-        adisyonBilgi.innerHTML = 'Bu masada açık adisyon yok.'
+        adisyonBilgi.innerHTML = '<div class="durum-mesaj">Bu masada şu an açık bir hesap yok.</div>'
         kalemlerDiv.innerHTML = ''
         document.getElementById('hepsini-ode-btn').style.display = 'none'
         tamamlandiDiv.style.display = 'none'
@@ -207,13 +397,23 @@
       const toplam = kalemler.reduce((acc, k) => acc + Number(k.birim_fiyat) * k.adet, 0)
       const odenen = kalemler.reduce((acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0)
       const kalan = toplam - odenen
+      const yuzde = toplam > 0 ? Math.round((odenen / toplam) * 100) : 0
 
       adisyonBilgi.innerHTML = `
-        <div class="baslik">${masa.numara}</div>
-        <div class="satir"><span>Toplam:</span><span>${toplam.toFixed(2)}₺</span></div>
-        <div class="satir"><span>Ödenen:</span><span>${odenen.toFixed(2)}₺</span></div>
-        <div class="kalan satir"><span>Kalan:</span><span>${kalan.toFixed(2)}₺</span></div>
+        <div class="ozet-masa">${masa.numara}</div>
+        <div class="ozet-kalan-etiket">Kalan tutar</div>
+        <div class="ozet-kalan-tutar">${kalan.toFixed(2)}₺</div>
+        <div class="ilerleme-ray"><div class="ilerleme-dolu" id="ilerleme-dolu"></div></div>
+        <div class="ozet-satirlar">
+          <span>Ödenen: <b>${odenen.toFixed(2)}₺</b></span>
+          <span>Toplam: <b>${toplam.toFixed(2)}₺</b></span>
+        </div>
       `
+      // İlerleme çubuğunu animasyonla doldur
+      requestAnimationFrame(() => {
+        const dolu = document.getElementById('ilerleme-dolu')
+        if (dolu) dolu.style.width = yuzde + '%'
+      })
 
       const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
 
@@ -226,7 +426,7 @@
         tamamlandiDiv.style.display = 'none'
         if (kalan > 0) {
           hepsiniOdeBtn.style.display = 'block'
-          hepsiniOdeBtn.innerHTML = 'Hepsini Öde (' + kalan.toFixed(2) + '₺)'
+          hepsiniOdeBtn.innerHTML = 'Hepsini Öde · ' + kalan.toFixed(2) + '₺'
           hepsiniOdeBtn.onclick = () => hepsiniOde(adisyon.id, kalan)
         } else {
           hepsiniOdeBtn.style.display = 'none'
@@ -234,8 +434,8 @@
       }
 
       // Kalemleri çiz
-      kalemlerDiv.innerHTML = ''
-      kalemler.forEach(kalem => {
+      kalemlerDiv.innerHTML = kalemler.length > 0 ? '<div class="bolum-baslik">Sipariş kalemleri</div>' : ''
+      kalemler.forEach((kalem, i) => {
         const kalanAdet = kalem.adet - kalem.odenmis_adet
         const tamamenOdendi = kalanAdet === 0
         const birimFiyat = Number(kalem.birim_fiyat)
@@ -247,9 +447,10 @@
 
         const satir = document.createElement('div')
         satir.className = tamamenOdendi ? 'kalem tamamen-odendi' : 'kalem'
+        satir.style.animationDelay = (0.04 * i) + 's'
 
-        const odenmisYazi = kalem.odenmis_adet > 0 
-          ? ` (${kalem.odenmis_adet}/${kalem.adet} ödendi)` 
+        const odenmisYazi = kalem.odenmis_adet > 0
+          ? ` · ${kalem.odenmis_adet}/${kalem.adet} ödendi`
           : ''
 
         if (tamamenOdendi) {
@@ -257,28 +458,28 @@
             <div class="kalem-ust">
               <div>
                 <div class="kalem-ad">${kalem.urun_adi} × ${kalem.adet}</div>
-                <div class="kalem-detay">Tamamen ödendi ✓</div>
+                <div class="kalem-rozet">✓ Tamamen ödendi</div>
               </div>
-              <div>${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
+              <div class="kalem-fiyat">${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
             </div>
           `
         } else {
           const secili = secimler[kalem.id]
           const odenecekTutar = (birimFiyat * secili).toFixed(2)
-          
+
           satir.innerHTML = `
             <div class="kalem-ust">
               <div>
                 <div class="kalem-ad">${kalem.urun_adi} × ${kalem.adet}</div>
-                <div class="kalem-detay">${birimFiyat.toFixed(2)}₺/adet${odenmisYazi}</div>
+                <div class="kalem-detay">${birimFiyat.toFixed(2)}₺ / adet${odenmisYazi}</div>
               </div>
-              <div>${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
+              <div class="kalem-fiyat">${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
             </div>
             <div class="kalem-alt">
               <button class="adet-btn" data-aksiyon="azalt" data-kalem-id="${kalem.id}" ${secili <= 1 ? 'disabled' : ''}>−</button>
               <span class="adet-sayi">${secili}</span>
               <button class="adet-btn" data-aksiyon="arttir" data-kalem-id="${kalem.id}" ${secili >= kalanAdet ? 'disabled' : ''}>+</button>
-              <button class="ode-btn" data-aksiyon="ode" data-kalem-id="${kalem.id}">${secili} adet öde (${odenecekTutar}₺)</button>
+              <button class="ode-btn" data-aksiyon="ode" data-kalem-id="${kalem.id}">${secili} adet öde · ${odenecekTutar}₺</button>
             </div>
           `
         }
