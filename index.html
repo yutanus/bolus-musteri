@@ -218,14 +218,10 @@
       const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
 
       if (kalan === 0 && kalemler.length > 0) {
+        // Hesap tamamen odendi. Adisyonu KAPATMA islemini artik sunucu yapiyor
+        // (odeme-sonuc.js). Musteri sayfasi sadece "odendi" gosterir, yazma yapmaz.
         tamamlandiDiv.style.display = 'block'
         hepsiniOdeBtn.style.display = 'none'
-
-        if (adisyon.durum === 'acik') {
-          await supabase.from('adisyonlar')
-            .update({ durum: 'odendi', kapanis_zamani: new Date().toISOString() })
-            .eq('id', adisyon.id)
-        }
       } else {
         tamamlandiDiv.style.display = 'none'
         if (kalan > 0) {

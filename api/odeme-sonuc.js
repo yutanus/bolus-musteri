@@ -55,14 +55,21 @@ module.exports = function handler(request, response) {
 
         const parcalar = fis.split('-');
         const tip = parcalar[0];
+        let adisyonId = null;
 
         if (tip === 'FULL') {
-          await tumAdisyonuOde(Number(parcalar[1]), odenenTutar, sonuc.paymentId);
+          adisyonId = Number(parcalar[1]);
+          await tumAdisyonuOde(adisyonId, odenenTutar, sonuc.paymentId);
         } else if (tip === 'ITEM') {
-          await kalemOde(Number(parcalar[1]), Number(parcalar[2]), Number(parcalar[3]), odenenTutar, sonuc.paymentId);
+          adisyonId = Number(parcalar[1]);
+          await kalemOde(adisyonId, Number(parcalar[2]), Number(parcalar[3]), odenenTutar, sonuc.paymentId);
         } else {
           throw new Error('Taninmayan fis tipi: ' + fis);
         }
+
+        // Odeme islendikten sonra: bu adisyonun kalani sifirsa adisyonu kapat
+        await adisyonuKapatmayiDene(adisyonId);
+
       } catch (e) {
         // Para alindi ama kayit takildi: musteriyi korkutma, sorunu bize bildir.
         console.error('ODEME ALINDI AMA VERITABANI YAZILAMADI:', e, 'paymentId:', sonuc.paymentId);
@@ -106,4 +113,20 @@ async function kalemOde(adisyonId, kalemId, odenenAdet, tutar, paymentId) {
   const { error: updHata } = await supabase
     .from('adisyon_kalemleri').update({ odenmis_adet: yeni }).eq('id', kalemId);
   if (updHata) throw new Error('kalem guncelleme: ' + JSON.stringify(updHata));
+}
+
+// Adisyonun tum kalemleri tamamen odendiyse adisyonu kapat.
+// (Eskiden musteri sayfasi yapiyordu; artik guvenli sekilde sunucu yapiyor.)
+async function adisyonuKapatmayiDene(adisyonId) {
+  const { data: kalemler, error } = await supabase
+    .from('adisyon_kalemleri').select('adet, odenmis_adet').eq('adisyon_id', adisyonId);
+  if (error || !kalemler || kalemler.length === 0) return;
+
+  const hepsiOdendi = kalemler.every(k => k.odenmis_adet >= k.adet);
+  if (hepsiOdendi) {
+    await supabase.from('adisyonlar')
+      .update({ durum: 'odendi', kapanis_zamani: new Date().toISOString() })
+      .eq('id', adisyonId)
+      .eq('durum', 'acik'); // sadece hala acikse kapat
+  }
 }
