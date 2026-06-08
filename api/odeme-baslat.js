@@ -1,11 +1,18 @@
 // Gercek odeme baslatma — iyzico Checkout Form
 const Iyzipay = require('iyzipay');
+const { createClient } = require('@supabase/supabase-js');
 
 const iyzipay = new Iyzipay({
   apiKey: process.env.IYZICO_API_KEY,
   secretKey: process.env.IYZICO_SECRET_KEY,
   uri: 'https://sandbox-api.iyzipay.com'
 });
+
+// Sunucu tarafi Supabase baglantisi (service anahtari, RLS'yi asar)
+const supabase = createClient(
+  'https://ybgzysyojshulpmdyrrm.supabase.co',
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 module.exports = function handler(request, response) {
   // Sadece POST kabul ediyoruz (tarayici bize body ile veri yolluyor)
@@ -29,6 +36,9 @@ module.exports = function handler(request, response) {
     response.status(400).json({ basarili: false, hata: 'Gecersiz tutar' });
     return;
   }
+
+  // Fisten adisyon kimligini cikar: "FULL-21" / "ITEM-21-45-2" -> 21
+  const adisyonId = Number(fis.split('-')[1]);
 
   // iyzico tutari ondalikli metin bekliyor: 123.45 gibi
   const fiyat = gelenTutar.toFixed(2);
@@ -88,11 +98,26 @@ module.exports = function handler(request, response) {
     ]
   };
 
-  iyzipay.checkoutFormInitialize.create(istek, function (hata, sonuc) {
-    if (hata) {
-      response.status(500).json({ basarili: false, hata: hata });
-    } else {
-      response.status(200).json({ basarili: true, sonuc: sonuc });
+  iyzipay.checkoutFormInitialize.create(istek, async function (hata, sonuc) {
+    if (hata || !sonuc || !sonuc.paymentPageUrl) {
+      response.status(500).json({ basarili: false, hata: hata || 'paymentPageUrl yok' });
+      return;
     }
+
+    // ASKIDA ODEME: iyzico'ya gonderdik, simdi "beklemede" kaydi birakiyoruz.
+    // token'i saklamak onemli: odeme takilirsa sonradan iyzico'ya bununla sorabiliriz.
+    try {
+      await supabase.from('odemeler').insert({
+        adisyon_id: adisyonId,
+        tutar: gelenTutar,
+        durum: 'beklemede',
+        token: sonuc.token
+      });
+    } catch (e) {
+      // Kayit atilamasa bile odemeyi engelleme; odeme-sonuc yine de isleyebilir.
+      console.error('beklemede kaydi atilamadi:', e);
+    }
+
+    response.status(200).json({ basarili: true, sonuc: sonuc });
   });
 };

@@ -1,4 +1,4 @@
-// iyzico odeme sonrasi buraya doner — sonucu kontrol edip veritabanina yaziyoruz
+// iyzico odeme sonrasi buraya doner — sonucu kontrol edip veritabanini guncelliyoruz
 const Iyzipay = require('iyzipay');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -8,9 +8,7 @@ const iyzipay = new Iyzipay({
   uri: 'https://sandbox-api.iyzipay.com'
 });
 
-// DIKKAT: Burada service anahtarini kullaniyoruz. Bu anahtar RLS'yi asar,
-// yani sunucu yazma yetkisine sahip olur. Bu dosya SADECE sunucuda (Vercel
-// Function) calistigi icin guvenli; anahtar tarayiciya asla gitmiyor.
+// Service anahtari (RLS'yi asar). Sadece sunucuda calisir, guvenli.
 const supabase = createClient(
   'https://ybgzysyojshulpmdyrrm.supabase.co',
   process.env.SUPABASE_SERVICE_KEY
@@ -50,32 +48,14 @@ module.exports = function handler(request, response) {
       }
 
       // --- Odeme basarili ---
-      const fis = sonuc.conversationId || sonuc.basketId;
       const odenenTutar = Number(sonuc.paidPrice);
 
       try {
-        if (!fis) throw new Error('fis geri gelmedi: ' + JSON.stringify({ c: sonuc.conversationId, b: sonuc.basketId }));
-
-        const parcalar = fis.split('-');
-        const tip = parcalar[0];
-        let adisyonId = null;
-
-        if (tip === 'FULL') {
-          adisyonId = Number(parcalar[1]);
-          await tumAdisyonuOde(adisyonId, odenenTutar, sonuc.paymentId);
-        } else if (tip === 'ITEM') {
-          adisyonId = Number(parcalar[1]);
-          await kalemOde(adisyonId, Number(parcalar[2]), Number(parcalar[3]), odenenTutar, sonuc.paymentId);
-        } else {
-          throw new Error('Taninmayan fis tipi: ' + fis);
-        }
-
-        // Odeme islendikten sonra: bu adisyonun kalani sifirsa adisyonu kapat
-        await adisyonuKapatmayiDene(adisyonId);
-
+        await odemeyiTamamla(token, sonuc);
       } catch (e) {
-        // Para alindi ama kayit takildi: musteriyi korkutma, sorunu bize bildir.
-        console.error('ODEME ALINDI AMA VERITABANI YAZILAMADI:', e, 'paymentId:', sonuc.paymentId);
+        // Para alindi ama islem takildi: musteriyi korkutma, sorunu kaydet.
+        // "beklemede" kaydi durdugu icin otomatik kontrolcu sonra toparlayabilir.
+        console.error('ODEME ALINDI AMA ISLENEMEDI:', e, 'token:', token);
       }
 
       response.status(200).send(
@@ -85,30 +65,82 @@ module.exports = function handler(request, response) {
   );
 };
 
-async function tumAdisyonuOde(adisyonId, tutar, paymentId) {
-  const { error: insertHata } = await supabase.from('odemeler').insert({
-    adisyon_id: adisyonId, tutar: tutar, iyzico_odeme_id: String(paymentId), durum: 'basarili'
-  });
-  if (insertHata) throw new Error('odemeler insert: ' + JSON.stringify(insertHata));
+// Bir basarili odemeyi isle. Iki kez calissa bile bir kez uygular (kilit mantigi).
+async function odemeyiTamamla(token, sonuc) {
+  const fis = sonuc.conversationId || sonuc.basketId;
+  const odenenTutar = Number(sonuc.paidPrice);
+  const paymentId = String(sonuc.paymentId);
 
-  const { data: kalemler, error: kalemHata } = await supabase
+  // KILIT: sadece "beklemede" olan kaydi "basarili"ya cevir. Bu islem atomik:
+  // iki istek ayni anda gelse bile sadece BIRI kaydi yakalar.
+  const { data: yakalanan, error: claimHata } = await supabase
+    .from('odemeler')
+    .update({ durum: 'basarili', iyzico_odeme_id: paymentId })
+    .eq('token', token)
+    .eq('durum', 'beklemede')
+    .select();
+
+  if (claimHata) throw new Error('claim: ' + JSON.stringify(claimHata));
+
+  let uygula = false;
+
+  if (yakalanan && yakalanan.length > 0) {
+    // Biz yakaladik: kalemleri uygulayacagiz.
+    uygula = true;
+  } else {
+    // Yakalayamadik. Ya bu token icin hic "beklemede" kayit yoktu, ya da baskasi isledi.
+    const { data: varolan } = await supabase
+      .from('odemeler').select('id, durum').eq('token', token);
+
+    if (!varolan || varolan.length === 0) {
+      // baslat tarafinda kayit atilamamis. Yedek: simdi basarili kayit ekle ve uygula.
+      await supabase.from('odemeler').insert({
+        adisyon_id: Number(fis.split('-')[1]),
+        tutar: odenenTutar,
+        durum: 'basarili',
+        iyzico_odeme_id: paymentId,
+        token: token
+      });
+      uygula = true;
+    } else {
+      // Zaten islenmis (basarili). Tekrar uygulama (cift islemeyi onler).
+      uygula = false;
+    }
+  }
+
+  if (!uygula) return;
+
+  // --- Kalemleri uygula (fis'e gore) ---
+  const parcalar = fis.split('-');
+  const tip = parcalar[0];
+  const adisyonId = Number(parcalar[1]);
+
+  if (tip === 'FULL') {
+    await tumAdisyonuUygula(adisyonId);
+  } else if (tip === 'ITEM') {
+    await kalemiUygula(adisyonId, Number(parcalar[2]), Number(parcalar[3]));
+  } else {
+    throw new Error('Taninmayan fis tipi: ' + fis);
+  }
+
+  await adisyonuKapatmayiDene(adisyonId);
+}
+
+// Tum adisyonun kalemlerini tamamen odendi yap
+async function tumAdisyonuUygula(adisyonId) {
+  const { data: kalemler, error } = await supabase
     .from('adisyon_kalemleri').select('id, adet').eq('adisyon_id', adisyonId);
-  if (kalemHata) throw new Error('kalem okuma: ' + JSON.stringify(kalemHata));
-
+  if (error) throw new Error('kalem okuma: ' + JSON.stringify(error));
   for (const k of (kalemler || [])) {
     await supabase.from('adisyon_kalemleri').update({ odenmis_adet: k.adet }).eq('id', k.id);
   }
 }
 
-async function kalemOde(adisyonId, kalemId, odenenAdet, tutar, paymentId) {
-  const { error: insertHata } = await supabase.from('odemeler').insert({
-    adisyon_id: adisyonId, tutar: tutar, iyzico_odeme_id: String(paymentId), durum: 'basarili'
-  });
-  if (insertHata) throw new Error('odemeler insert: ' + JSON.stringify(insertHata));
-
-  const { data: kalem, error: okumaHata } = await supabase
+// Tek kalemin belli adedini odendi say
+async function kalemiUygula(adisyonId, kalemId, odenenAdet) {
+  const { data: kalem, error } = await supabase
     .from('adisyon_kalemleri').select('adet, odenmis_adet').eq('id', kalemId).single();
-  if (okumaHata || !kalem) throw new Error('kalem okuma: ' + JSON.stringify(okumaHata));
+  if (error || !kalem) throw new Error('kalem okuma: ' + JSON.stringify(error));
 
   let yeni = kalem.odenmis_adet + odenenAdet;
   if (yeni > kalem.adet) yeni = kalem.adet;
@@ -118,8 +150,7 @@ async function kalemOde(adisyonId, kalemId, odenenAdet, tutar, paymentId) {
   if (updHata) throw new Error('kalem guncelleme: ' + JSON.stringify(updHata));
 }
 
-// Adisyonun tum kalemleri tamamen odendiyse adisyonu kapat.
-// (Eskiden musteri sayfasi yapiyordu; artik guvenli sekilde sunucu yapiyor.)
+// Adisyonun tum kalemleri odendiyse adisyonu kapat
 async function adisyonuKapatmayiDene(adisyonId) {
   const { data: kalemler, error } = await supabase
     .from('adisyon_kalemleri').select('adet, odenmis_adet').eq('adisyon_id', adisyonId);
@@ -130,6 +161,6 @@ async function adisyonuKapatmayiDene(adisyonId) {
     await supabase.from('adisyonlar')
       .update({ durum: 'odendi', kapanis_zamani: new Date().toISOString() })
       .eq('id', adisyonId)
-      .eq('durum', 'acik'); // sadece hala acikse kapat
+      .eq('durum', 'acik');
   }
 }
