@@ -8,9 +8,12 @@ const iyzipay = new Iyzipay({
   uri: 'https://sandbox-api.iyzipay.com'
 });
 
+// DIKKAT: Burada service anahtarini kullaniyoruz. Bu anahtar RLS'yi asar,
+// yani sunucu yazma yetkisine sahip olur. Bu dosya SADECE sunucuda (Vercel
+// Function) calistigi icin guvenli; anahtar tarayiciya asla gitmiyor.
 const supabase = createClient(
   'https://ybgzysyojshulpmdyrrm.supabase.co',
-  'sb_publishable__y__ogbkSM4Y0QwFrE-UUQ_Eamnac2R'
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 // Musteriye gosterilecek sade sonuc sayfasi
