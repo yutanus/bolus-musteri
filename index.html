@@ -141,6 +141,15 @@
     #tamamlandi .tik { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; margin: 0 auto 12px; }
     #tamamlandi .baslik { font-weight: 700; font-size: 20px; margin-bottom: 4px; }
     #tamamlandi .alt { font-size: 13.5px; opacity: 0.92; font-weight: 500; }
+    #google-yorum-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 18px; padding: 13px 22px; border-radius: 13px;
+      background: #fff; color: var(--turkuaz-koyu); text-decoration: none;
+      font-size: 14.5px; font-weight: 700; border: none;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.16);
+    }
+    #google-yorum-btn:active { background: #f0fafb; }
+    #google-yorum-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 
     .durum-mesaj { padding: 34px 22px; text-align: center; color: var(--soft); font-weight: 500; }
 
@@ -193,6 +202,10 @@
       <div class="tik">✓</div>
       <div class="baslik">Hesap tamamen ödendi</div>
       <div class="alt">Bizi tercih ettiğiniz için teşekkürler!</div>
+      <a id="google-yorum-btn" href="https://search.google.com/local/writereview?placeid=ChIJu_R3eOq5yhQR0MnZa2XP5SA" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="#0EA5B5" aria-hidden="true"><path d="M12 17.27l5.18 3.13-1.37-5.9L20.4 9.6l-6.04-.52L12 3.5 9.64 9.08 3.6 9.6l4.59 4.99-1.37 5.9z"/></svg>
+        Bizi Google'da değerlendirin
+      </a>
     </div>
   </div>
 
