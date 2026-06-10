@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bölüş — Restoranınız için masada telefonla ödeme</title>
-  <meta name="description" content="Müşterileriniz QR'ı okutur, payını seçer, telefonundan öder. Garsonunuz kart makinesiyle uğraşmaz; masanız daha hızlı boşalır.">
+  <title>Bölüş — Misafirleriniz hesabı masada böler ve telefondan öder</title>
+  <meta name="description" content="Misafirleriniz karekodu okutur, yediğini seçer, telefonundan öder ve bahşişini bırakır. Garsonunuz kart makinesiyle uğraşmaz; masanız daha hızlı boşalır.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,168 +16,148 @@
       --lacivert: #13294B;
       --lacivert-koyu: #0d1c33;
       --soft: #5a7178;
-      --bg: #dbe6e7;
+      --bg: #eef4f5;
       --surface: #ffffff;
-      --line: #e7eef0;
+      --line: #e3ecee;
       --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--lacivert);
-      -webkit-font-smoothing: antialiased;
-      line-height: 1.5;
-    }
-    .sinir { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+    body { font-family: var(--font); background: var(--surface); color: var(--lacivert); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+    .sinir { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
     a { color: inherit; text-decoration: none; }
-    .eyebrow {
-      font-size: 12px; font-weight: 700; letter-spacing: 1.4px;
-      text-transform: uppercase; color: var(--turkuaz-koyu); margin-bottom: 14px;
-    }
+    .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: var(--turkuaz-koyu); margin-bottom: 16px; }
 
     /* ---- Üst bar ---- */
-    .ustbar {
-      position: sticky; top: 0; z-index: 50;
-      background: linear-gradient(135deg, var(--turkuaz), var(--lacivert));
-      color: #fff;
-    }
-    .ustbar-ic { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .ustbar { position: sticky; top: 0; z-index: 50; background: rgba(13,28,51,0.88); backdrop-filter: blur(10px); color: #fff; }
+    .ustbar-ic { display: flex; align-items: center; justify-content: space-between; height: 66px; }
     .marka { display: flex; align-items: center; gap: 10px; }
-    .marka svg { width: 30px; height: 30px; flex-shrink: 0; }
+    .marka svg { width: 31px; height: 31px; flex-shrink: 0; }
     .marka-ad { font-size: 21px; font-weight: 800; letter-spacing: -0.5px; }
-    .ustbar-nav { display: flex; align-items: center; gap: 26px; }
-    .ustbar-nav a { font-size: 14.5px; font-weight: 600; color: #d8f1f4; }
+    .ustbar-nav { display: flex; align-items: center; gap: 28px; }
+    .ustbar-nav a { font-size: 14.5px; font-weight: 600; color: #c9d6e6; }
     .ustbar-nav a:hover { color: #fff; }
-    .nav-cta { background: #fff; color: var(--lacivert); padding: 9px 17px; border-radius: 10px; font-weight: 700; font-size: 14px; }
+    .nav-cta { background: var(--turkuaz); color: #fff; padding: 10px 18px; border-radius: 11px; font-weight: 700; font-size: 14px; }
+    .nav-cta:hover { background: var(--turkuaz-koyu); }
 
     /* ---- Hero ---- */
     .hero {
-      position: relative; overflow: hidden;
-      background: linear-gradient(135deg, var(--turkuaz), var(--lacivert));
-      color: #fff; padding: 56px 0 76px;
+      position: relative; overflow: hidden; color: #fff; padding: 64px 0 84px;
+      background: linear-gradient(135deg, rgba(11,134,148,0.93), rgba(13,28,51,0.95)), url('img/hero.jpg') center/cover no-repeat, var(--lacivert);
     }
-    /* Logo filigranı */
-    .hero-filigran { position: absolute; right: -60px; top: -40px; width: 360px; opacity: 0.07; pointer-events: none; }
+    .hero-filigran { position: absolute; right: -70px; top: -50px; width: 380px; opacity: 0.08; pointer-events: none; }
     .hero-filigran svg { width: 100%; height: auto; }
-    .hero-grid { position: relative; display: grid; grid-template-columns: 1.02fr 0.98fr; gap: 50px; align-items: center; }
-    .hero h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 800; letter-spacing: -1.4px; line-height: 1.07; }
-    .hero p.alt { font-size: 18px; color: #d8f1f4; margin-top: 20px; max-width: 470px; font-weight: 500; }
-    .hero-butonlar { display: flex; gap: 13px; margin-top: 30px; flex-wrap: wrap; align-items: center; }
-    .btn-birincil {
-      background: #fff; color: var(--lacivert); padding: 15px 26px;
-      border-radius: 13px; font-weight: 700; font-size: 16px;
-      box-shadow: 0 10px 26px rgba(0,0,0,0.18); transition: transform 0.15s;
-    }
-    .btn-birincil:hover { transform: translateY(-1px); }
+    .hero-grid { position: relative; display: grid; grid-template-columns: 1.04fr 0.96fr; gap: 54px; align-items: center; }
+    .rozet { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); padding: 7px 14px; border-radius: 99px; font-size: 13px; font-weight: 600; color: #eafafc; margin-bottom: 22px; }
+    .rozet .nokta { width: 7px; height: 7px; border-radius: 50%; background: var(--acik-turkuaz); }
+    .hero h1 { font-size: clamp(35px, 5vw, 56px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.06; }
+    .hero p.alt { font-size: 18.5px; color: #d6e7ee; margin-top: 22px; max-width: 490px; font-weight: 500; line-height: 1.6; }
+    .hero-butonlar { display: flex; gap: 14px; margin-top: 32px; flex-wrap: wrap; align-items: center; }
+    .btn-birincil { background: #fff; color: var(--lacivert); padding: 16px 28px; border-radius: 13px; font-weight: 700; font-size: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.22); transition: transform 0.15s; }
+    .btn-birincil:hover { transform: translateY(-2px); }
     .hero-not { font-size: 14.5px; color: #bfe7ec; font-weight: 600; }
 
     /* ---- Telefon demosu ---- */
-    .tel-sutun { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .tel {
-      width: 300px; max-width: 100%;
-      background: #0a1526; border-radius: 40px; padding: 11px;
-      box-shadow: 0 30px 60px rgba(8, 18, 38, 0.45);
-    }
-    .ekran {
-      background: var(--bg); border-radius: 30px; overflow: hidden;
-      height: 588px; overflow-y: auto; position: relative;
-      -webkit-overflow-scrolling: touch;
-    }
-    .tel-not { font-size: 13.5px; color: #d8f1f4; font-weight: 600; display: flex; align-items: center; gap: 7px; }
-    .tel-not .nokta { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a0; box-shadow: 0 0 0 4px rgba(110,231,160,0.25); }
+    .tel-sutun { display: flex; flex-direction: column; align-items: center; gap: 13px; }
+    .tel { width: 304px; max-width: 100%; background: #0a1526; border-radius: 42px; padding: 11px; box-shadow: 0 34px 70px rgba(8,18,38,0.5); border: 1px solid rgba(255,255,255,0.06); }
+    .ekran { background: #fff; border-radius: 32px; overflow: hidden; height: 600px; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; }
+    .tel-not { font-size: 13.5px; color: #d6e7ee; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .tel-not .nokta { width: 7px; height: 7px; border-radius: 50%; background: #5fe09a; box-shadow: 0 0 0 4px rgba(95,224,154,0.25); }
 
     /* demo iç ekran */
-    .d-band { background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); color: #fff; padding: 18px 18px 20px; }
+    .d-band { background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); color: #fff; padding: 19px 18px 21px; }
     .d-marka { display: flex; align-items: center; gap: 9px; }
     .d-marka svg { width: 26px; height: 26px; }
     .d-marka span { font-size: 18px; font-weight: 800; letter-spacing: -0.4px; }
-    .d-masa { font-size: 10.5px; font-weight: 700; color: #cfeef2; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 16px; }
-    .d-etiket { font-size: 12px; color: #cfeef2; font-weight: 500; margin-top: 2px; }
-    .d-tutar { font-size: 32px; font-weight: 800; letter-spacing: -1.2px; margin: 1px 0 10px; }
-    .d-ray { height: 7px; background: rgba(255,255,255,0.25); border-radius: 99px; overflow: hidden; margin-bottom: 9px; }
-    .d-dolu { height: 100%; background: #fff; border-radius: 99px; transition: width 0.3s; }
-    .d-ozetsatir { display: flex; justify-content: space-between; font-size: 11.5px; color: #cfeef2; font-weight: 500; }
+    .d-masa { font-size: 10.5px; font-weight: 700; color: #d2eef2; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 16px; }
+    .d-etiket { font-size: 12px; color: #d2eef2; font-weight: 500; margin-top: 2px; }
+    .d-tutar { font-size: 33px; font-weight: 800; letter-spacing: -1.3px; margin: 1px 0 11px; color: #fff; }
+    .d-ray { height: 8px; background: rgba(255,255,255,0.28); border-radius: 99px; overflow: hidden; margin-bottom: 9px; }
+    .d-dolu { height: 100%; background: var(--acik-turkuaz); border-radius: 99px; transition: width 0.35s ease; }
+    .d-ozetsatir { display: flex; justify-content: space-between; font-size: 11.5px; color: #d2eef2; font-weight: 500; }
     .d-ozetsatir b { color: #fff; font-weight: 700; }
-    .d-govde { padding: 16px 16px 20px; }
-    .d-bolumbaslik { font-size: 10.5px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .d-kalem { padding: 11px 0; border-bottom: 1px solid var(--line); }
-    .d-kalem.sec { background: #f4fbfc; border-radius: 11px; padding: 11px 10px; border-bottom: 1px solid transparent; box-shadow: inset 0 0 0 1.5px var(--acik-turkuaz); }
+    .d-govde { padding: 16px 15px 20px; }
+    .d-bolumbaslik { font-size: 10.5px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 9px; }
+    .d-kalem { display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+    .d-kalem.sec { background: #effbfc; border-radius: 13px; padding: 11px 10px; border-bottom: 1px solid transparent; box-shadow: inset 0 0 0 1.6px var(--turkuaz); }
+    .d-kalem.bitti { opacity: 0.5; }
+    .d-foto { position: relative; width: 46px; height: 46px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #f3a847, #e06a3b); display: flex; align-items: center; justify-content: center; font-size: 23px; }
+    .d-foto.f2 { background: linear-gradient(135deg, #e8c24a, #d98b2b); }
+    .d-foto.f3 { background: linear-gradient(135deg, #4aa3c9, #2f6fb0); }
+    .d-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .d-icerik { flex: 1; min-width: 0; }
     .d-kust { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .d-kad { font-weight: 600; font-size: 14px; }
+    .d-kad { font-weight: 700; font-size: 14px; color: var(--lacivert); }
     .d-kdetay { font-size: 11px; color: var(--soft); margin-top: 2px; font-weight: 500; }
-    .d-kfiyat { font-weight: 700; font-size: 14px; white-space: nowrap; }
-    .d-kalt { display: flex; gap: 7px; align-items: center; margin-top: 10px; }
-    .d-adet { width: 32px; height: 32px; border-radius: 50%; border: none; background: #eef4f4; color: var(--lacivert); font-size: 18px; font-weight: 600; cursor: pointer; }
-    .d-adet:disabled { color: #c2cccc; background: #f4f7f7; cursor: not-allowed; }
-    .d-say { min-width: 22px; text-align: center; font-weight: 700; font-size: 14px; }
-    .d-aratoplam { flex: 1; text-align: right; font-size: 12px; font-weight: 700; color: var(--turkuaz-koyu); }
-    .d-aratoplam.bos { color: var(--soft); font-weight: 500; }
-    .d-bahsis { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .d-kfiyat { font-weight: 800; font-size: 14px; white-space: nowrap; color: var(--lacivert); }
+    .d-kalt { display: flex; gap: 7px; align-items: center; margin-top: 9px; }
+    .d-adet { width: 31px; height: 31px; border-radius: 50%; border: none; background: #e8f1f1; color: var(--lacivert); font-size: 18px; font-weight: 700; cursor: pointer; line-height: 1; }
+    .d-adet:disabled { color: #c2cccc; background: #f3f6f6; cursor: not-allowed; }
+    .d-say { min-width: 20px; text-align: center; font-weight: 800; font-size: 14px; color: var(--lacivert); }
+    .d-aratoplam { flex: 1; text-align: right; font-size: 12px; font-weight: 800; color: var(--turkuaz-koyu); }
+    .d-aratoplam.bos { color: var(--soft); font-weight: 600; }
+    .d-rozet { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; color: var(--turkuaz-koyu); margin-top: 3px; }
+    .d-bahsis { margin-top: 16px; padding-top: 15px; border-top: 1px solid var(--line); }
     .d-bbaslik { font-size: 11.5px; font-weight: 600; color: var(--soft); margin-bottom: 9px; }
     .d-bsec { display: flex; gap: 6px; }
-    .d-bbtn { flex: 1; padding: 9px 4px; border-radius: 9px; border: 1.5px solid var(--line); background: #fff; color: var(--lacivert); font-size: 12.5px; font-weight: 700; cursor: pointer; }
-    .d-bbtn.aktif { border-color: var(--turkuaz); background: #eafafc; color: var(--turkuaz-koyu); }
+    .d-bbtn { flex: 1; padding: 9px 4px; border-radius: 9px; border: 1.6px solid var(--line); background: #fff; color: var(--lacivert); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+    .d-bbtn.aktif { border-color: var(--turkuaz); background: #effbfc; color: var(--turkuaz-koyu); }
     .d-ozet { text-align: center; font-size: 12.5px; color: var(--soft); font-weight: 600; margin-top: 14px; min-height: 16px; }
     .d-ozet b { color: var(--lacivert); font-weight: 800; }
-    .d-ode { width: 100%; margin-top: 9px; background: var(--turkuaz); color: #fff; border: none; padding: 14px; border-radius: 13px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 18px rgba(14,165,181,0.3); }
-    .d-ode:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-    .d-basarili { text-align: center; padding: 60px 24px; background: linear-gradient(135deg, var(--turkuaz), var(--turkuaz-koyu)); color: #fff; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .d-tik { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 34px; font-weight: 800; margin-bottom: 16px; }
-    .d-bbaslik2 { font-size: 21px; font-weight: 700; }
-    .d-balt { font-size: 14px; opacity: 0.92; margin-top: 6px; font-weight: 500; }
-    .d-bastan { margin-top: 26px; background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.4); padding: 11px 22px; border-radius: 11px; font-weight: 700; font-size: 14px; cursor: pointer; }
+    .d-ode { width: 100%; margin-top: 9px; background: var(--turkuaz); color: #fff; border: none; padding: 14px; border-radius: 13px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 8px 18px rgba(14,165,181,0.32); }
+    .d-ode:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    .d-toast { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%) translateY(10px); background: var(--lacivert); color: #fff; padding: 11px 18px; border-radius: 11px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; white-space: nowrap; box-shadow: 0 10px 24px rgba(0,0,0,0.28); }
+    .d-toast.gor { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .d-basarili { text-align: center; padding: 70px 24px; background: linear-gradient(135deg, var(--turkuaz), var(--turkuaz-koyu)); color: #fff; min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .d-tik { width: 66px; height: 66px; border-radius: 50%; background: rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: 800; margin-bottom: 16px; }
+    .d-bbaslik2 { font-size: 22px; font-weight: 800; }
+    .d-balt { font-size: 14px; opacity: 0.94; margin-top: 7px; font-weight: 500; }
+    .d-bastan { margin-top: 28px; background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.45); padding: 11px 24px; border-radius: 11px; font-weight: 700; font-size: 14px; cursor: pointer; }
 
     /* ---- Bölümler ---- */
-    .bolum { padding: 76px 0; }
-    .bolum.acik { background: var(--surface); }
-    .bolum h2 { font-size: clamp(27px, 3.6vw, 38px); font-weight: 800; letter-spacing: -0.9px; line-height: 1.12; max-width: 760px; }
-    .bolum .giris { font-size: 17px; color: var(--soft); margin-top: 16px; max-width: 660px; font-weight: 500; }
-
-    /* Sorun */
-    .sorun-ust { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-    .sorun-ust .logo-mini svg { width: 30px; height: 30px; }
+    .bolum { padding: 84px 0; }
+    .bolum.gri { background: var(--bg); }
+    .bolum h2 { font-size: clamp(28px, 3.7vw, 40px); font-weight: 800; letter-spacing: -1px; line-height: 1.12; max-width: 780px; }
+    .bolum .giris { font-size: 17.5px; color: var(--soft); margin-top: 18px; max-width: 680px; font-weight: 500; line-height: 1.6; }
 
     /* Kazanç — büyük üç */
-    .kazanc-buyuk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 46px; }
-    .fkart { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 30px 26px; transition: transform 0.18s, box-shadow 0.18s; }
-    .bolum.acik .fkart { background: var(--bg); border-color: transparent; }
-    .fkart:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(8,24,45,0.12); }
-    .fkart .ikon { width: 52px; height: 52px; border-radius: 15px; background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
-    .fkart .ikon svg { width: 26px; height: 26px; stroke: #fff; }
+    .kazanc-buyuk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 50px; }
+    .fkart { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 32px 28px; transition: transform 0.18s, box-shadow 0.18s; }
+    .bolum.gri .fkart { box-shadow: 0 2px 14px rgba(8,24,45,0.05); }
+    .fkart:hover { transform: translateY(-4px); box-shadow: 0 22px 44px rgba(8,24,45,0.13); }
+    .fkart .ikon { width: 54px; height: 54px; border-radius: 16px; background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+    .fkart .ikon svg { width: 27px; height: 27px; stroke: #fff; }
     .fkart h3 { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; }
-    .fkart p { font-size: 15px; color: var(--soft); margin-top: 10px; font-weight: 500; line-height: 1.55; }
+    .fkart p { font-size: 15px; color: var(--soft); margin-top: 11px; font-weight: 500; line-height: 1.6; }
 
     /* Kazanç — küçük destek */
     .kazanc-kucuk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 20px; }
-    .skart { display: flex; gap: 13px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 20px; }
-    .bolum.acik .skart { background: var(--bg); border-color: transparent; }
-    .skart .ikon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 11px; background: #eafafc; display: flex; align-items: center; justify-content: center; }
+    .skart { display: flex; gap: 13px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .skart .ikon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 11px; background: #e3f8fa; display: flex; align-items: center; justify-content: center; }
     .skart .ikon svg { width: 19px; height: 19px; stroke: var(--turkuaz-koyu); }
     .skart h4 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
-    .skart p { font-size: 13px; color: var(--soft); margin-top: 4px; font-weight: 500; }
+    .skart p { font-size: 13px; color: var(--soft); margin-top: 4px; font-weight: 500; line-height: 1.5; }
 
     /* Nasıl çalışır */
-    .adimlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 44px; }
-    .adim { background: var(--bg); border-radius: 18px; padding: 26px 24px; }
-    .bolum.acik .adim { background: #f1f6f7; }
-    .adim-no { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); color: #fff; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
-    .adim h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-    .adim p { font-size: 14.5px; color: var(--soft); margin-top: 8px; font-weight: 500; }
+    .adimlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 50px; }
+    .adim { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 28px 26px; }
+    .bolum.gri .adim { box-shadow: 0 2px 14px rgba(8,24,45,0.05); }
+    .adim-no { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); color: #fff; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+    .adim h3 { font-size: 18.5px; font-weight: 800; letter-spacing: -0.3px; }
+    .adim p { font-size: 14.5px; color: var(--soft); margin-top: 9px; font-weight: 500; line-height: 1.55; }
 
     /* İletişim */
-    .iletisim-kutu { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); color: #fff; border-radius: 24px; padding: 48px 40px; margin-top: 40px; display: flex; justify-content: space-between; align-items: center; gap: 30px; flex-wrap: wrap; }
-    .iletisim-filigran { position: absolute; right: 24px; bottom: -30px; width: 180px; opacity: 0.1; pointer-events: none; }
+    .iletisim-kutu { position: relative; overflow: hidden; background: linear-gradient(135deg, var(--turkuaz), var(--lacivert)); color: #fff; border-radius: 26px; padding: 52px 44px; display: flex; justify-content: space-between; align-items: center; gap: 32px; flex-wrap: wrap; box-shadow: 0 24px 50px rgba(11,40,75,0.28); }
+    .iletisim-filigran { position: absolute; right: 30px; bottom: -34px; width: 190px; opacity: 0.1; pointer-events: none; }
     .iletisim-kutu h2 { color: #fff; position: relative; }
-    .iletisim-kutu .alt { color: #d8f1f4; font-size: 16px; margin-top: 10px; font-weight: 500; position: relative; }
+    .iletisim-kutu .alt { color: #d6e7ee; font-size: 16.5px; margin-top: 12px; font-weight: 500; position: relative; max-width: 440px; line-height: 1.55; }
     .iletisim-bilgi { text-align: right; position: relative; }
-    .iletisim-bilgi .ad { font-size: 18px; font-weight: 700; }
-    .iletisim-bilgi a { display: block; font-size: 15px; color: #eafafc; margin-top: 6px; font-weight: 600; }
+    .iletisim-bilgi .ad { font-size: 18px; font-weight: 800; }
+    .iletisim-bilgi a { display: block; font-size: 15px; color: #eafafc; margin-top: 7px; font-weight: 600; }
     .iletisim-bilgi a:hover { color: #fff; }
 
     /* Footer */
-    footer { padding: 30px 0 40px; }
+    footer { padding: 32px 0 44px; background: var(--bg); }
     .footer-ic { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
     .footer-ic .marka-ad { color: var(--lacivert); font-size: 18px; }
     .footer-ic .marka svg line { stroke: var(--lacivert); }
@@ -187,16 +167,16 @@
     button:focus-visible, a:focus-visible { outline: 3px solid var(--acik-turkuaz); outline-offset: 2px; border-radius: 6px; }
 
     @media (max-width: 880px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 42px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 46px; }
       .tel-sutun { order: 2; }
       .kazanc-buyuk, .kazanc-kucuk, .adimlar { grid-template-columns: 1fr; }
       .ustbar-nav .gizle { display: none; }
       .iletisim-bilgi { text-align: left; }
-      .iletisim-kutu { padding: 36px 28px; }
+      .iletisim-kutu { padding: 38px 28px; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      .fkart, .btn-birincil, .d-dolu { transition: none; }
+      .fkart, .btn-birincil, .d-dolu, .d-toast { transition: none; }
     }
   </style>
 </head>
@@ -217,7 +197,7 @@
         <span class="marka-ad">Bölüş</span>
       </div>
       <nav class="ustbar-nav">
-        <a class="gizle" href="#kazanc">Kazancınız</a>
+        <a class="gizle" href="#kazanc">Restorana faydası</a>
         <a class="gizle" href="#nasil">Nasıl çalışır</a>
         <a class="nav-cta" href="#iletisim">İletişime geçin</a>
       </nav>
@@ -238,18 +218,19 @@
     </div>
     <div class="sinir hero-grid">
       <div>
-        <h1>Hesap bölüşme derdi, masada bitsin.</h1>
-        <p class="alt">Müşterileriniz masadaki QR'ı okutur, kendi yediğini seçer ve telefonundan öder. Garsonunuz kart makinesiyle uğraşmaz, masanız daha hızlı boşalır.</p>
+        <div class="rozet"><span class="nokta"></span> Restoranlar için masada ödeme</div>
+        <h1>Misafirleriniz hesabı saniyeler içinde bölüşsün.</h1>
+        <p class="alt">Masadaki karekodu okutur, yediğini seçer, telefonundan öder ve bahşişini bırakır. Garsonunuz kart makinesiyle uğraşmaz; masanız daha hızlı döner, misafiriniz daha keyifli ayrılır.</p>
         <div class="hero-butonlar">
-          <a class="btn-birincil" href="#iletisim">Restoranınızda deneyin</a>
-          <span class="hero-not">Pilot ücretsiz</span>
+          <a class="btn-birincil" href="#iletisim">Restoranınızda ücretsiz deneyin</a>
+          <span class="hero-not">Kurulum dakikalar sürer</span>
         </div>
       </div>
       <div class="tel-sutun">
         <div class="tel">
           <div class="ekran" id="ekran"></div>
         </div>
-        <div class="tel-not"><span class="nokta"></span> Deneyin — kalem seçin, ödeyin</div>
+        <div class="tel-not"><span class="nokta"></span> Sağdaki ekranı deneyin — kalem seçin, ödeyin</div>
       </div>
     </div>
   </section>
@@ -258,48 +239,48 @@
   <section class="bolum">
     <div class="sinir">
       <div class="eyebrow">Tanıdık sahne</div>
-      <h2>"Sen şunu yedin, ben bunu" pazarlığı masayı kilitliyor.</h2>
-      <p class="giris">Dört ayrı karta bölünen hesap, kart makinesiyle gidip gelen garson, masada geçen on beş dakika. Bu hem müşteriyi yorar hem de sıradaki grubun oturmasını geciktirir. Bölüş bu anı saniyelere indirir.</p>
+      <h2>Hesap geldiğinde keyif yarıda kalmasın.</h2>
+      <p class="giris">"Sen şunu yedin, ben bunu" pazarlığı, dört ayrı karta bölünen hesap, masada beklenen on beş dakika... Bu hem misafiri yorar hem de masanızın boşalmasını geciktirir. Bölüş, o anı keyifli ve saniyelik hale getirir — kimse garsonu beklemez, kimse hesap pazarlığı yapmaz.</p>
     </div>
   </section>
 
   <!-- Kazanç (öne çıkarılmış) -->
-  <section class="bolum acik" id="kazanc">
+  <section class="bolum gri" id="kazanc">
     <div class="sinir">
-      <div class="eyebrow">Restoranınıza ne kazandırır</div>
-      <h2>Daha hızlı masa, daha rahat garson, daha çok bahşiş.</h2>
-      <p class="giris">Bölüş tek bir şeye odaklanır: ödeme anını hızlandırmak. O an hızlandığında kazandığınız üç şey var.</p>
+      <div class="eyebrow">Restoranınıza ne katar</div>
+      <h2>Daha hızlı masa, daha rahat ekip, daha çok bahşiş.</h2>
+      <p class="giris">Bölüş tek bir şeye odaklanır: ödeme anını hızlandırmak. O an hızlandığında üç şey kazanırsınız.</p>
 
       <div class="kazanc-buyuk">
         <div class="fkart">
           <div class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-          <h3>Masa hızlı boşalır</h3>
-          <p>Hesap istemek, garsonu beklemek, kart makinesi yok. Ödeme saniyeler sürer; sıradaki grup daha çabuk oturur, masa devir hızınız artar.</p>
+          <h3>Masalar daha hızlı döner</h3>
+          <p>Misafir hesabı beklemez, garsonu aramaz. Ödeme saniyeler sürer; masa erken boşalır ve akşam boyunca daha çok misafir ağırlarsınız.</p>
         </div>
         <div class="fkart">
           <div class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
-          <h3>Garson servise döner</h3>
-          <p>Hesabı dört parçaya bölmek, masa masa kart çekmek yok. Personeliniz kasiyer değil; misafire ve servise odaklanır.</p>
+          <h3>Ekibiniz servise döner</h3>
+          <p>Hesabı dörde bölmek, masa masa kart çekmek yok. Garsonunuz kasiyer gibi değil, ev sahibi gibi çalışır — vaktini misafire ayırır.</p>
         </div>
         <div class="fkart">
           <div class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-          <h3>Bahşiş artar</h3>
-          <p>Ödeme ekranında hazır bahşiş seçenekleri çıkar. Bırakmak tek dokunuş olunca bahşiş oranı belirgin şekilde yükselir.</p>
+          <h3>Bahşişler artar</h3>
+          <p>Ödeme ekranında hazır bahşiş seçenekleri çıkar. Bırakmak tek dokunuş olunca misafir daha rahat bahşiş bırakır, ekibinizin eline geçen artar.</p>
         </div>
       </div>
 
       <div class="kazanc-kucuk">
         <div class="skart">
           <div class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 12l2 2 4-4"/></svg></div>
-          <div><h4>Kurulum dakikalar</h4><p>Mevcut kasanıza dokunmaz. Masalara QR koymak yeter.</p></div>
+          <div><h4>Düzeninize dokunmaz</h4><p>Mevcut kasanızı değiştirmez. Masalara karekod koymak yeter.</p></div>
         </div>
         <div class="skart">
           <div class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
-          <div><h4>Müşteri için sıfır engel</h4><p>Uygulama indirme yok, üyelik yok. Okut, öde, kalk.</p></div>
+          <div><h4>Misafir için sıfır engel</h4><p>Uygulama indirme yok, üyelik yok. Okut, seç, öde.</p></div>
         </div>
         <div class="skart">
           <div class="ikon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
-          <div><h4>Para doğrudan size</h4><p>Ödeme güvenli altyapıdan restoranın hesabına geçer.</p></div>
+          <div><h4>Para doğrudan size</h4><p>Ödeme güvenli altyapıdan doğrudan restoranın hesabına geçer.</p></div>
         </div>
       </div>
     </div>
@@ -309,29 +290,29 @@
   <section class="bolum" id="nasil">
     <div class="sinir">
       <div class="eyebrow">Nasıl çalışır</div>
-      <h2>Müşteri için üç adım, garson için sıfır yük.</h2>
+      <h2>Misafir için üç adım, ekip için sıfır yük.</h2>
       <div class="adimlar">
         <div class="adim">
           <div class="adim-no">1</div>
-          <h3>QR'ı okutur</h3>
-          <p>Masadaki kodu telefonuyla okutur. Uygulama indirmek yok; sayfa doğrudan açılır.</p>
+          <h3>Karekodu okutur</h3>
+          <p>Masadaki kodu telefonuyla okutur. İndirilecek uygulama yok; sayfa anında açılır.</p>
         </div>
         <div class="adim">
           <div class="adim-no">2</div>
           <h3>Payını seçer</h3>
-          <p>Yediği kalemleri işaretleyip kendi payını öder ya da hesabı olduğu gibi alır.</p>
+          <p>Yediği kalemleri işaretler, kendi payını öder; dilerse hesabın tamamını üstlenir.</p>
         </div>
         <div class="adim">
           <div class="adim-no">3</div>
-          <h3>Telefondan öder</h3>
-          <p>Kartıyla güvenle öder, dilerse bahşiş bırakır. Hesap kapanır, masa boşalır.</p>
+          <h3>Öder ve bahşiş bırakır</h3>
+          <p>Kartıyla güvenle öder, dilerse bahşiş ekler. Hesap kapanır, masa yeniden hazır.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- İletişim -->
-  <section class="bolum acik" id="iletisim">
+  <section class="bolum gri" id="iletisim">
     <div class="sinir">
       <div class="iletisim-kutu">
         <div class="iletisim-filigran" aria-hidden="true">
@@ -345,9 +326,9 @@
           </svg>
         </div>
         <div>
-          <div class="eyebrow" style="color:#d8f1f4;">İletişim</div>
-          <h2>Restoranınızda görmek ister misiniz?</h2>
-          <p class="alt">Pilotu ücretsiz kuruyoruz. Bir masada deneyip farkı kendiniz görün.</p>
+          <div class="eyebrow" style="color:#d6e7ee;">İletişim</div>
+          <h2>Misafirleriniz farkı ilk günden hissetsin.</h2>
+          <p class="alt">Pilotu ücretsiz kuruyoruz. Bir masada deneyin, gerisini siz görün.</p>
         </div>
         <div class="iletisim-bilgi">
           <div class="ad">Yiğithan Tangit</div>
@@ -377,77 +358,106 @@
   </footer>
 
   <script>
-    // --- Telefon demosu (site içi, gerçek para/işlem yok) ---
+    // --- Telefon demosu (site içi önizleme; gerçek para/işlem yok) ---
     const D_URUNLER = [
-      { id: 1, ad: 'Pizza', birim: 160, adet: 2 },
-      { id: 2, ad: 'Makarna', birim: 140, adet: 1 },
-      { id: 3, ad: 'Kola', birim: 40, adet: 2 }
+      { id: 1, ad: 'Pizza',   birim: 160, adet: 2, emoji: '🍕', foto: 'img/pizza.jpg',   sinif: '' },
+      { id: 2, ad: 'Makarna', birim: 140, adet: 1, emoji: '🍝', foto: 'img/makarna.jpg', sinif: 'f2' },
+      { id: 3, ad: 'Kola',    birim: 40,  adet: 2, emoji: '🥤', foto: 'img/kola.jpg',    sinif: 'f3' }
     ];
-    const dSepet = { 1: 0, 2: 0, 3: 0 };
-    let dBahsis = 0;        // 0, 5, 10, 15 (yüzde)
-    let dOdendi = false;
-    let dSonOdenen = 0;
+    const dPaid = { 1: 0, 2: 0, 3: 0 };   // ödenmiş adet
+    const dSel  = { 1: 0, 2: 0, 3: 0 };   // seçili adet
+    let dBahsis = 0;
 
     const ekran = document.getElementById('ekran');
 
+    function dSifirla() {
+      for (const k in dPaid) { dPaid[k] = 0; dSel[k] = 0; }
+      dBahsis = 0;
+    }
+
+    function dToast(msg) {
+      const t = document.getElementById('d-toast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('gor');
+      setTimeout(() => t.classList.remove('gor'), 1900);
+    }
+
     function dCiz() {
-      if (dOdendi) {
+      const toplam = D_URUNLER.reduce((a, u) => a + u.birim * u.adet, 0);
+      const odenen = D_URUNLER.reduce((a, u) => a + u.birim * dPaid[u.id], 0);
+      const kalan = toplam - odenen;
+
+      // Hesap tamamen ödendiyse
+      if (kalan <= 0) {
         ekran.innerHTML = `
           <div class="d-basarili">
             <div class="d-tik">✓</div>
-            <div class="d-bbaslik2">Ödeme alındı</div>
-            <div class="d-balt">${dSonOdenen.toFixed(2)}₺ — teşekkürler!</div>
+            <div class="d-bbaslik2">Hesap tamamen ödendi</div>
+            <div class="d-balt">Bizi tercih ettiğiniz için teşekkürler!</div>
             <button class="d-bastan" id="d-bastan">Baştan dene</button>
           </div>`;
-        document.getElementById('d-bastan').onclick = () => {
-          dOdendi = false; dBahsis = 0;
-          for (const k in dSepet) dSepet[k] = 0;
-          dCiz();
-        };
+        document.getElementById('d-bastan').onclick = () => { dSifirla(); dCiz(); };
         return;
       }
 
-      const toplam = D_URUNLER.reduce((a, u) => a + u.birim * u.adet, 0);
       let secTutar = 0, secAdet = 0;
-      D_URUNLER.forEach(u => { const s = dSepet[u.id]; if (s > 0) { secTutar += u.birim * s; secAdet += s; } });
+      D_URUNLER.forEach(u => { const s = dSel[u.id]; if (s > 0) { secTutar += u.birim * s; secAdet += s; } });
       const bahsisTutar = Math.round(secTutar * dBahsis) / 100;
+      const odenecek = secTutar + bahsisTutar;
+      const ilerleme = Math.min(100, ((odenen + secTutar) / toplam) * 100);
 
       let kalemHtml = '';
       D_URUNLER.forEach(u => {
-        const s = dSepet[u.id];
-        const ara = (u.birim * s).toFixed(2);
-        const etiket = s > 0
-          ? `<span class="d-aratoplam">${s} × ${u.birim}₺ = ${ara}₺</span>`
-          : `<span class="d-aratoplam bos">adet seç</span>`;
-        kalemHtml += `
-          <div class="d-kalem ${s > 0 ? 'sec' : ''}">
-            <div class="d-kust">
-              <div>
-                <div class="d-kad">${u.ad} × ${u.adet}</div>
-                <div class="d-kdetay">${u.birim}₺ / adet</div>
+        const kalanAdet = u.adet - dPaid[u.id];
+        const s = dSel[u.id];
+        const bitti = kalanAdet === 0;
+        const foto = `<div class="d-foto ${u.sinif}">${u.emoji}<img src="${u.foto}" alt="" onerror="this.style.display='none'"></div>`;
+        if (bitti) {
+          kalemHtml += `
+            <div class="d-kalem bitti">
+              ${foto}
+              <div class="d-icerik">
+                <div class="d-kust">
+                  <div><div class="d-kad">${u.ad} × ${u.adet}</div><div class="d-rozet">✓ Ödendi</div></div>
+                  <div class="d-kfiyat">${(u.birim * u.adet).toFixed(0)}₺</div>
+                </div>
               </div>
-              <div class="d-kfiyat">${(u.birim * u.adet).toFixed(2)}₺</div>
-            </div>
-            <div class="d-kalt">
-              <button class="d-adet" data-a="eksi" data-id="${u.id}" ${s <= 0 ? 'disabled' : ''}>−</button>
-              <span class="d-say">${s}</span>
-              <button class="d-adet" data-a="arti" data-id="${u.id}" ${s >= u.adet ? 'disabled' : ''}>+</button>
-              ${etiket}
-            </div>
-          </div>`;
+            </div>`;
+        } else {
+          const ara = (u.birim * s).toFixed(0);
+          const etiket = s > 0
+            ? `<span class="d-aratoplam">${s} × ${u.birim}₺ = ${ara}₺</span>`
+            : `<span class="d-aratoplam bos">adet seç</span>`;
+          const odenmisYazi = dPaid[u.id] > 0 ? ` · ${dPaid[u.id]}/${u.adet} ödendi` : '';
+          kalemHtml += `
+            <div class="d-kalem ${s > 0 ? 'sec' : ''}">
+              ${foto}
+              <div class="d-icerik">
+                <div class="d-kust">
+                  <div><div class="d-kad">${u.ad} × ${u.adet}</div><div class="d-kdetay">${u.birim}₺ / adet${odenmisYazi}</div></div>
+                  <div class="d-kfiyat">${(u.birim * u.adet).toFixed(0)}₺</div>
+                </div>
+                <div class="d-kalt">
+                  <button class="d-adet" data-a="eksi" data-id="${u.id}" ${s <= 0 ? 'disabled' : ''}>−</button>
+                  <span class="d-say">${s}</span>
+                  <button class="d-adet" data-a="arti" data-id="${u.id}" ${s >= kalanAdet ? 'disabled' : ''}>+</button>
+                  ${etiket}
+                </div>
+              </div>
+            </div>`;
+        }
       });
 
-      const oranlar = [5, 10, 15];
       let bahsisHtml = '';
-      oranlar.forEach(o => { bahsisHtml += `<button class="d-bbtn ${dBahsis === o ? 'aktif' : ''}" data-b="${o}">%${o}</button>`; });
+      [5, 10, 15].forEach(o => { bahsisHtml += `<button class="d-bbtn ${dBahsis === o ? 'aktif' : ''}" data-b="${o}">%${o}</button>`; });
       bahsisHtml += `<button class="d-bbtn ${dBahsis === 0 ? 'aktif' : ''}" data-b="0">Yok</button>`;
 
-      const odenecek = secTutar + bahsisTutar;
       const ozet = secTutar > 0
         ? (bahsisTutar > 0
-            ? `${secAdet} adet · ${secTutar.toFixed(2)}₺ + ${bahsisTutar.toFixed(2)}₺ bahşiş = <b>${odenecek.toFixed(2)}₺</b>`
-            : `${secAdet} adet seçildi · <b>${secTutar.toFixed(2)}₺</b>`)
-        : 'Ödemek istediğin kalemleri seç';
+            ? `${secAdet} adet · ${secTutar.toFixed(0)}₺ + ${bahsisTutar.toFixed(2)}₺ bahşiş = <b>${odenecek.toFixed(2)}₺</b>`
+            : `${secAdet} adet seçildi · <b>${secTutar.toFixed(0)}₺</b>`)
+        : 'Ödemek istediğiniz kalemleri seçin';
 
       ekran.innerHTML = `
         <div class="d-band">
@@ -464,27 +474,29 @@
           </div>
           <div class="d-masa">Masa 7</div>
           <div class="d-etiket">Kalan tutar</div>
-          <div class="d-tutar">${toplam.toFixed(2)}₺</div>
-          <div class="d-ray"><div class="d-dolu" style="width:0%"></div></div>
-          <div class="d-ozetsatir"><span>Ödenen: <b>0₺</b></span><span>Toplam: <b>${toplam.toFixed(2)}₺</b></span></div>
+          <div class="d-tutar">${kalan.toFixed(0)}₺</div>
+          <div class="d-ray"><div class="d-dolu" style="width:${ilerleme}%"></div></div>
+          <div class="d-ozetsatir"><span>Ödenen: <b>${odenen.toFixed(0)}₺</b></span><span>Toplam: <b>${toplam.toFixed(0)}₺</b></span></div>
         </div>
         <div class="d-govde">
           <div class="d-bolumbaslik">Sipariş kalemleri</div>
           ${kalemHtml}
           <div class="d-bahsis">
-            <div class="d-bbaslik">Bahşiş eklemek ister misin?</div>
+            <div class="d-bbaslik">Bahşiş eklemek ister misiniz?</div>
             <div class="d-bsec">${bahsisHtml}</div>
           </div>
           <div class="d-ozet">${ozet}</div>
           <button class="d-ode" id="d-ode" ${secTutar <= 0 ? 'disabled' : ''}>${secTutar > 0 ? 'Seçtiklerimi Öde · ' + odenecek.toFixed(2) + '₺' : 'Seçtiklerimi Öde'}</button>
-        </div>`;
+        </div>
+        <div class="d-toast" id="d-toast"></div>`;
 
       ekran.querySelectorAll('[data-a]').forEach(b => {
         b.onclick = () => {
           const id = Number(b.dataset.id);
-          const urun = D_URUNLER.find(u => u.id === id);
-          if (b.dataset.a === 'arti' && dSepet[id] < urun.adet) dSepet[id]++;
-          if (b.dataset.a === 'eksi' && dSepet[id] > 0) dSepet[id]--;
+          const u = D_URUNLER.find(x => x.id === id);
+          const kalanAdet = u.adet - dPaid[id];
+          if (b.dataset.a === 'arti' && dSel[id] < kalanAdet) dSel[id]++;
+          if (b.dataset.a === 'eksi' && dSel[id] > 0) dSel[id]--;
           dCiz();
         };
       });
@@ -494,7 +506,12 @@
       const odeBtn = document.getElementById('d-ode');
       if (odeBtn) odeBtn.onclick = () => {
         if (secTutar <= 0) return;
-        dSonOdenen = odenecek; dOdendi = true; dCiz();
+        const tutar = odenecek;
+        D_URUNLER.forEach(u => { dPaid[u.id] += dSel[u.id]; dSel[u.id] = 0; });
+        dBahsis = 0;
+        const yeniKalan = D_URUNLER.reduce((a, u) => a + u.birim * u.adet, 0) - D_URUNLER.reduce((a, u) => a + u.birim * dPaid[u.id], 0);
+        dCiz();
+        if (yeniKalan > 0) dToast(tutar.toFixed(2) + '₺ ödendi ✓');
       };
     }
 
