@@ -16,6 +16,17 @@ const supabase = createClient(
 
 // Musteriye gosterilecek sade sonuc sayfasi
 function sayfa(baslik, mesaj, renk) {
+  const basarili = renk === 'yesil';
+  // Google yorum butonu SADECE basarili odemede gosterilir
+  const yorumBtn = basarili ? `
+      <a href="https://search.google.com/local/writereview?placeid=ChIJu_R3eOq5yhQR0MnZa2XP5SA"
+         target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;justify-content:center;gap:8px;
+         margin-top:22px;padding:13px 22px;border-radius:13px;background:#0B8694;
+         color:#fff;text-decoration:none;font-size:14.5px;font-weight:700;">
+        <span style="font-size:18px;line-height:1;">★</span> Bizi Google'da değerlendirin
+      </a>` : '';
+
   return `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bölüş</title></head>
@@ -23,9 +34,10 @@ function sayfa(baslik, mesaj, renk) {
     display:flex;align-items:center;justify-content:center;min-height:100vh;">
     <div style="background:white;padding:40px 30px;border-radius:16px;text-align:center;
       max-width:360px;margin:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-      <div style="font-size:48px;margin-bottom:10px;">${renk === 'yesil' ? '✅' : '⚠️'}</div>
+      <div style="font-size:48px;margin-bottom:10px;">${basarili ? '✅' : '⚠️'}</div>
       <h1 style="color:#333;font-size:22px;margin:0 0 10px;">${baslik}</h1>
       <p style="color:#777;font-size:15px;margin:0;">${mesaj}</p>
+      ${yorumBtn}
     </div>
   </body></html>`;
 }
