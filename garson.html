@@ -4,179 +4,134 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bölüş - Garson</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --turkuaz: #0EA5B5;
+      --turkuaz-koyu: #0B8694;
+      --lacivert: #13294B;
+      --lacivert-koyu: #0d1c33;
+      --ink: #13294B;
+      --soft: #5a7178;
+      --bg: #dbe6e7;
+      --surface: #ffffff;
+      --line: #eef2f2;
+      --kirmizi: #c0392b;
+      --font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, sans-serif;
+      font-family: var(--font);
       max-width: 500px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #f5f5f5;
+      margin: 0 auto;
+      padding: 16px 14px 50px;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
     }
-    h1 {
-      color: #333;
-      text-align: center;
+
+    .ust-bant {
+      background: linear-gradient(135deg, var(--turkuaz), var(--lacivert));
+      border-radius: 18px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-bottom: 16px;
     }
-    .ekran {
-      display: none;
-    }
-    .ekran.aktif {
-      display: block;
-    }
-    .kart {
-      background: white;
-      padding: 25px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      color: #555;
-      font-size: 14px;
-    }
+    .ust-bant svg { width: 30px; height: 30px; flex-shrink: 0; }
+    .ust-bant .ad { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+    .ust-bant .rol { margin-left: auto; font-size: 12px; font-weight: 600; color: #cfeef2; background: rgba(255,255,255,0.15); padding: 5px 11px; border-radius: 8px; }
+
+    .ekran { display: none; }
+    .ekran.aktif { display: block; }
+
+    .kart { background: var(--surface); padding: 22px; border-radius: 16px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(19,41,75,0.06); }
+
+    h2.bolum { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+    h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
+
+    label { display: block; margin-bottom: 6px; color: var(--soft); font-size: 13px; font-weight: 600; }
     input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
+      width: 100%; padding: 12px; margin-bottom: 14px;
+      border: 1px solid #dde7e7; border-radius: 10px; font-size: 16px;
+      font-family: var(--font); background: #fafcfc; color: var(--ink);
     }
+    input:focus { outline: none; border-color: var(--turkuaz); background: #fff; }
+
     button {
-      width: 100%;
-      background: #007aff;
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 10px;
+      width: 100%; background: var(--turkuaz); color: #fff; border: none;
+      padding: 13px; border-radius: 11px; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-bottom: 10px; font-family: var(--font);
     }
-    button:disabled {
-      background: #ccc;
-    }
-    button.cikis {
-      background: #ff3b30;
-    }
-    button.geri {
-      background: #8e8e93;
-    }
-    button.kucuk {
-      width: auto;
-      padding: 8px 16px;
-      margin: 0;
-      font-size: 14px;
-    }
+    button:active { background: var(--turkuaz-koyu); }
+    button:disabled { background: #b8c5c5; cursor: not-allowed; }
+    button.cikis { background: var(--kirmizi); }
+    button.geri { background: #8895a0; }
+    button.kucuk { width: auto; padding: 8px 15px; margin: 0; font-size: 13px; }
+
+    .baslik { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .karsilama { color: var(--ink); font-size: 14px; font-weight: 600; }
+
     .masa-karti {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      background: var(--surface); padding: 18px; border-radius: 14px; margin-bottom: 10px;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 3px 12px rgba(19,41,75,0.05);
     }
-    .masa-karti:hover {
-      background: #eef6ff;
-    }
-    .durum-acik {
-      background: #ff9500;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-    .durum-bos {
-      background: #34c759;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
+    .masa-karti:active { background: #f3f9f9; }
+    .masa-karti strong { color: var(--ink); font-size: 16px; font-weight: 700; }
+    .durum-acik { background: var(--turkuaz); color: #fff; padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .durum-bos { background: #e6edee; color: var(--soft); padding: 5px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+
     .kalem-satir {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      background: var(--surface); padding: 15px 16px; border-radius: 12px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 8px rgba(19,41,75,0.04);
     }
-    .kalem-satir.odendi {
-      opacity: 0.5;
-    }
+    .kalem-satir.odendi { opacity: 0.5; }
+    .kalem-satir > div:first-child { color: var(--ink); font-weight: 600; font-size: 14.5px; }
     .sil-btn {
-      background: #ff3b30;
-      color: white;
-      border: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      font-size: 16px;
-      cursor: pointer;
-      padding: 0;
-      margin: 0;
-      line-height: 1;
+      background: var(--kirmizi); color: #fff; border: none;
+      width: 28px; height: 28px; border-radius: 50%; font-size: 16px;
+      cursor: pointer; padding: 0; margin: 0; line-height: 1; flex-shrink: 0;
     }
-    .sil-btn:disabled {
-      background: #ccc;
-    }
-    .form-satir {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .form-satir input {
-      margin-bottom: 0;
-    }
-    #mesaj, #adisyon-mesaj {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      text-align: center;
-      display: none;
-    }
-    .hata {
-      background: #ffe5e5;
-      color: #c00;
-      display: block !important;
-    }
-    .baslik {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-    .karsilama {
-      color: #555;
-      font-size: 14px;
-    }
+    .sil-btn:disabled { background: #ccc; }
+
+    .form-satir { display: flex; gap: 8px; margin-bottom: 14px; }
+    .form-satir input { margin-bottom: 0; }
+
+    #mesaj, #adisyon-mesaj { margin-top: 14px; padding: 11px; border-radius: 10px; text-align: center; display: none; font-size: 14px; font-weight: 600; }
+    .hata { background: #fdecea; color: var(--kirmizi); display: block !important; }
+
     .toplam-kutu {
-      background: #007aff;
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
+      background: linear-gradient(135deg, var(--turkuaz), var(--lacivert));
+      color: #fff; padding: 18px; border-radius: 14px; margin-bottom: 14px;
+      text-align: center; font-size: 19px; font-weight: 800;
     }
-    .zaman-bilgi {
-      text-align: center;
-      color: #888;
-      font-size: 13px;
-      margin-bottom: 15px;
-    }
+    .toplam-kutu small { font-weight: 500; font-size: 13px; opacity: 0.9; }
+    .zaman-bilgi { text-align: center; color: var(--soft); font-size: 13px; margin-bottom: 14px; font-weight: 500; }
   </style>
 </head>
 <body>
 
+  <div class="ust-bant">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="42" y1="14" x2="42" y2="80" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+      <line x1="42" y1="74" x2="62" y2="74" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+      <line x1="26" y1="40" x2="58" y2="30" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+      <line x1="26" y1="54" x2="58" y2="44" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="42" cy="50" r="7" fill="#7fe0e8"/>
+      <circle cx="42" cy="92" r="7" fill="#7fe0e8"/>
+    </svg>
+    <span class="ad">Bölüş</span>
+    <span class="rol">Garson</span>
+  </div>
+
   <div id="ekran-giris" class="ekran aktif">
-    <h1>Bölüş - Garson</h1>
     <div class="kart">
+      <h2 class="bolum">Giriş yap</h2>
       <label for="email">Email</label>
       <input type="email" id="email" placeholder="garson1@bolus.local">
       <label for="sifre">Şifre</label>
@@ -191,7 +146,7 @@
       <span class="karsilama" id="karsilama">Hoş geldin</span>
       <button class="cikis kucuk" id="cikis-btn">Çıkış</button>
     </div>
-    <h1>Masalar</h1>
+    <h2 class="bolum">Masalar</h2>
     <div id="masa-listesi"></div>
   </div>
 
@@ -219,7 +174,6 @@
       document.getElementById(ekranId).classList.add('aktif')
     }
 
-    // ----- ZAMAN FARKI YARDIMCISI -----
     function zamanFarki(tarihStr) {
       const tarih = new Date(tarihStr)
       const simdi = new Date()
@@ -282,7 +236,6 @@
       masalariYukle()
     }
 
-    // ----- ÇIKIŞ (onayla) -----
     document.getElementById('cikis-btn').onclick = async () => {
       if (!confirm('Çıkış yapmak istediğine emin misin?')) return
       await supabase.auth.signOut()
@@ -338,7 +291,7 @@
           kart.innerHTML = `
             <div>
               <div><strong>${masa.numara}</strong></div>
-              <div style="font-size: 12px; color: #888; margin-top: 4px;">
+              <div style="font-size: 12px; color: #7a8893; margin-top: 4px; font-weight: 500;">
                 Toplam: ${bilgi.toplam.toFixed(2)}₺ · Kalan: ${bilgi.kalan.toFixed(2)}₺
               </div>
             </div>
@@ -379,7 +332,7 @@
       if (!adisyon) {
         icerik.innerHTML = `
           <div class="kart">
-            <p>Bu masada açık adisyon yok.</p>
+            <p style="margin-bottom: 14px; color: var(--soft); font-weight: 500;">Bu masada açık adisyon yok.</p>
             <button id="yeni-adisyon-btn">Yeni Adisyon Aç</button>
           </div>
         `
@@ -413,33 +366,33 @@
             <div class="kalem-satir ${k.odendi_mi ? 'odendi' : ''}">
               <div>
                 <div>${k.urun_adi} × ${k.adet}</div>
-                ${durumYazi ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">${durumYazi}</div>` : ''}
+                ${durumYazi ? `<div style="font-size: 12px; color: #7a8893; margin-top: 4px; font-weight: 500;">${durumYazi}</div>` : ''}
               </div>
               <span style="display: flex; align-items: center; gap: 10px;">
-                <span>${(Number(k.birim_fiyat) * k.adet).toFixed(2)}₺</span>
+                <span style="font-weight: 700;">${(Number(k.birim_fiyat) * k.adet).toFixed(2)}₺</span>
                 ${silButonu}
               </span>
             </div>
           `
         })
       } else {
-        kalemlerHtml = '<p style="color: #888;">Henüz ürün eklenmedi.</p>'
+        kalemlerHtml = '<p style="color: var(--soft); font-weight: 500;">Henüz ürün eklenmedi.</p>'
       }
 
       icerik.innerHTML = `
         <div class="toplam-kutu">
           Toplam: ${toplam.toFixed(2)}₺<br>
-          <small style="font-weight: normal; font-size: 14px;">Ödenen: ${odenen.toFixed(2)}₺ · Kalan: ${kalan.toFixed(2)}₺</small>
+          <small>Ödenen: ${odenen.toFixed(2)}₺ · Kalan: ${kalan.toFixed(2)}₺</small>
         </div>
 
         <div class="zaman-bilgi">Adisyon ${zamanFarki(adisyon.acilis_zamani)} açıldı</div>
 
-        <button id="adisyon-kapat-btn" style="background: #ff9500; margin-bottom: 15px;">Adisyonu Kapat</button>
+        <button id="adisyon-kapat-btn" style="background: var(--lacivert); margin-bottom: 16px;">Adisyonu Kapat</button>
 
         <div>${kalemlerHtml}</div>
 
-        <div class="kart" style="margin-top: 15px;">
-          <h3 style="margin-top: 0;">Ürün Ekle</h3>
+        <div class="kart" style="margin-top: 16px;">
+          <h3 style="margin-bottom: 14px;">Ürün Ekle</h3>
           <label>Ürün adı</label>
           <input type="text" id="urun-adi" placeholder="Örn: Margarita Pizza">
 
