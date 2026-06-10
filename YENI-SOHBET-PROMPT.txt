@@ -1,0 +1,292 @@
+Merhaba Claude, ben Yiğithan. Seninle önceki sohbetlerde "Bölüş"
+projesi üzerine çalışıyoruz. Yeni bir sohbete geçtim, aynı projeye
+kaldığımız yerden devam edeceğim. Bu prompt'u baştan sona oku ve
+beni yönet.
+
+═══════════════════════════════════════════════════════════
+KİŞİSEL BİLGİLER
+═══════════════════════════════════════════════════════════
+
+- Ad: Yiğithan Tangit
+- Eğitim: Altınbaş Üniversitesi, Yönetim Bilişim Sistemleri (YBS),
+  3. sınıf
+- Programlama: Başta HTML + biraz Python biliyordum. Bu projeyle
+  JavaScript, SQL, Supabase, Git/GitHub, RLS, trigger, auth,
+  Vercel deploy, Vercel Functions, npm, iyzico entegrasyonu,
+  cron job, ortam değişkenleri (env) öğrendim.
+- VS Code kullanıyorum (Cursor değil — agresif AI önerisi
+  öğrenmemi engelliyordu). Windows + PowerShell.
+- Haftada 10-20 saat ayırabiliyorum. Acelem yok ama ilerlemek
+  istiyorum.
+
+ÖNEMLİ KOLAYLIK: Claude'un Filesystem MCP eklentisiyle benim
+bilgisayarımdaki proje klasörüne DOĞRUDAN yazma erişimi var
+(C:\Users\Yiğithan\Desktop\bolus-musteri). Yani artık kod
+değişikliklerini Claude dosyalara kendisi yazıyor; benim
+kopyala-yapıştır yapmama gerek yok. (Eklenti bağlı değilse
+eski yöntem: tam dosyayı ver, Ctrl+A → yapıştır → Ctrl+S.)
+
+═══════════════════════════════════════════════════════════
+PROJE: BÖLÜŞ
+═══════════════════════════════════════════════════════════
+
+Restoranlarda müşterilerin yemek sonrası hesabı kalem kalem
+bölüştürüp telefondan ödemesini sağlayan web uygulaması.
+Türkiye'de muadili yok, yurt dışında Sunday App benzeri.
+
+İlk pilot hedefi: Akrabamın restoranı (Dürbün Cafe, Eminönü,
+kurumsal yapı, grup masaları yoğun — Bölüş için ideal). Henüz
+akrabamla konuşmadım; prototip + sunum hazır olunca konuşacağım.
+
+NİHAİ HEDEF: Bu bir DEMO değil. Akrabayla konuşunca o hafta
+restorana kurulup GERÇEK müşterilerin GERÇEK parayla kullanması
+isteniyor. Yani "çalışan, sağlam, en iyisi" bir ürün hedefleniyor.
+
+═══════════════════════════════════════════════════════════
+TEKNİK YIĞIN & ERİŞİM
+═══════════════════════════════════════════════════════════
+
+- Frontend: HTML + CSS + Vanilla JS (sonra Next.js'e geçilecek)
+- Backend: Vercel Functions (api/ klasörü, sunucu tarafı)
+- DB: Supabase (PostgreSQL)
+- Ödeme: iyzico Sandbox ✅ ENTEGRE, GERÇEK ADİSYONA BAĞLI, ÇALIŞIYOR
+- Hosting: Vercel (Hobby/ücretsiz plan, canlıda, otomatik deploy)
+- Versiyon kontrolü: GitHub (PUBLIC)
+
+Supabase URL: https://ybgzysyojshulpmdyrrm.supabase.co
+GitHub repo: github.com/yutanus/bolus-musteri (PUBLIC)
+Canlı site: https://bolus-musteri.vercel.app
+Auth kullanıcısı: garson1@bolus.local / Garson2026!
+Garson adı sistemde: Ahmet
+Proje klasörü: C:\Users\Yiğithan\Desktop\bolus-musteri
+Masa QR kodları örnek: Masa 3 = wzrao20172, Masa 2 = a3bf8nr5tw
+  (tüm kodlar qr-uret.html'de listelenir)
+iyzico sandbox test kartı: 5528790000000008, 12/30, CVC 123,
+  isim serbest (3DS'siz, para çekmez)
+
+Supabase publishable key (tarayıcıda kullanılan, GÜVENLİ):
+  sb_publishable__y__ogbkSM4Y0QwFrE-UUQ_Eamnac2R
+
+═══════════════════════════════════════════════════════════
+VERİTABANI DURUMU
+═══════════════════════════════════════════════════════════
+
+6 tablo kurulu:
+- restoranlar (id, created_at, ad, adres, iyzico_alt_uye_no)
+- masalar (id, created_at, restoran_id, numara, qr_kod)
+- adisyonlar (id, created_at, masa_id, durum, toplam_tutar,
+  acilis_zamani, kapanis_zamani)
+- adisyon_kalemleri (id, created_at, adisyon_id, urun_adi,
+  birim_fiyat, adet, toplam, odendi_mi, odenmis_adet)
+- odemeler (id, created_at, adisyon_id, tutar, iyzico_odeme_id,
+  durum, token)   ← "token" sütunu askıda ödeme için eklendi
+- garsonlar (id uuid auth.users'a bağlı, created_at, restoran_id,
+  ad)
+
+odemeler.durum değerleri: beklemede / basarili / iptal
+
+İki trigger:
+1. adisyon_kalemleri değişince adisyonlar.toplam_tutar güncellenir
+2. odenmis_adet >= adet ise odendi_mi otomatik true olur
+
+RLS DURUMU — ✅ SIKILAŞTIRILDI (artık USING(true) değil):
+- anon (müşteri = internetteki herkes) SADECE okuyabilir:
+  masalar, adisyonlar, adisyon_kalemleri. Hiçbir şey YAZAMAZ.
+  odemeler tablosunu HİÇ göremez.
+- authenticated (garson) kendi işlerini yapar: kalem ekle/sil/
+  güncelle, adisyon ekle/güncelle (kapatma dahil).
+- Sunucu (Vercel Functions) yazma işlerini service anahtarıyla
+  yapar (RLS'yi aşar).
+
+═══════════════════════════════════════════════════════════
+KOD DURUMU
+═══════════════════════════════════════════════════════════
+
+Klasör: Desktop/bolus-musteri/ (GitHub'a senkron, push edince
+Vercel otomatik deploy)
+
+3 HTML dosyası:
+1. index.html — Müşteri sayfası. QR ile masa bulur, kalemleri
+   gösterir, kısmi ödeme (adet seçimi) + "Hepsini Öde". Butonlar
+   GERÇEK iyzico ödemesine bağlı (artık sahte DB damgası DEĞİL).
+   Adisyon kapatma işi buradan KALDIRILDI (artık sunucu yapıyor).
+2. garson.html — Üç ekran (giriş, masa listesi, adisyon).
+   Supabase Auth ile giriş. Kalem ekle/sil, adisyon kapat.
+3. qr-uret.html — Admin/QR aracı. Garson girişiyle açılır, QR
+   kodları üretir, masa ekler.
+
+api/ klasörü (Vercel Functions, hepsi çalışıyor):
+- api/odeme-baslat.js — iyzico Checkout Form başlatır. Gerçek
+  tutarı index.html'den alır. iyzico'dan token alınca odemeler'e
+  {durum:'beklemede', token} kaydı atar (askıda ödeme). Supabase'e
+  SERVICE anahtarıyla bağlanır.
+- api/odeme-sonuc.js — iyzico callback'i. token ile "beklemede"
+  kaydını ATOMİK olarak "basarili"ya çevirir (çift-işleme kilidi),
+  kalemleri uygular, kalan sıfırsa adisyonu kapatır. Sade
+  "Ödeme başarılı" sayfası gösterir.
+- api/kontrol.js — OTOMATİK KONTROLCÜ. 3 dk'dan eski "beklemede"
+  ödemeleri iyzico'ya sorar; ödenmişse tamamlar, ödenmemişse
+  "iptal" yapar. Başında CRON_SECRET güvenlik kontrolü var.
+- api/test-iyzico.js — eski bağlantı testi.
+
+vercel.json — cron ayarı: /api/kontrol günde 1 kez (0 3 * * *,
+  yani 03:00 UTC ≈ TR 06:00). NOT: Vercel Hobby planı cron'u
+  günde EN FAZLA 1 kez çalıştırır. Daha sık gerekirse: dış
+  tetikleyici (cron-job.org) veya Vercel Pro ($20/ay).
+
+Proje npm projesi: package.json, package-lock.json, iyzipay paketi.
+.gitignore ile node_modules + .env korunuyor.
+
+"FİŞ" MANTIĞI (ödeme akışının kalbi): index.html iyzico'ya
+conversationId+basketId olarak bir etiket gönderir, dönüşte okunur.
+Tam ödeme: "FULL-<adisyonId>". Kısmi: "ITEM-<adisyonId>-<kalemId>-<adet>".
+odeme-sonuc bunu parse edip ne yapacağını anlar.
+
+═══════════════════════════════════════════════════════════
+ORTAM DEĞİŞKENLERİ (.env ve Vercel'de ekli)
+═══════════════════════════════════════════════════════════
+
+- IYZICO_API_KEY — iyzico sandbox
+- IYZICO_SECRET_KEY — iyzico sandbox
+- SUPABASE_SERVICE_KEY — Supabase KLASİK service_role anahtarı
+  (eyJ... JWT formatı). ÖNEMLİ DERS: Supabase'in YENİ sb_secret_
+  formatı supabase-js'te RLS'yi AŞAMIYOR; KLASİK service_role
+  (legacy, eyJ...) çalışıyor. Settings → API Keys → "Legacy anon,
+  service_role API keys" sekmesinden alındı.
+- CRON_SECRET — kontrol.js'i koruyan parola (Vercel cron otomatik
+  kullanır).
+
+GÜVENLİK DERSİ: Bir oturumda sohbete yanlışlıkla service anahtarı
+yapıştırıldı; güvenlik için Supabase'de o anahtar silinip yenisi
+üretildi (rotate). Gizli anahtarları sohbete ASLA yapıştırma;
+sadece .env ve Vercel'e koy.
+
+═══════════════════════════════════════════════════════════
+TASARIM KİMLİĞİ (✅ yeni — bu sohbette kararlaştırıldı ve uygulandı)
+═══════════════════════════════════════════════════════════
+
+Uzun bir renk/font/logo turundan sonra netleşen ve ÜÇ SAYFAYA DA
+uygulanan kimlik:
+
+- RENKLER: turkuaz #0EA5B5 (koyu tonu #0B8694), lacivert #13294B
+  (koyu #0d1c33), zemin #dbe6e7 (beyaz DEĞİL, hafif gri-turkuaz),
+  açık turkuaz vurgu #7fe0e8, soft metin #5a7178, kart beyaz #fff.
+- FONT: Plus Jakarta Sans (Google Fonts). Tek font, sade.
+- DÜZEN: Üstte turkuaz→lacivert geçişli RENKLİ BANT (beyaz yazı),
+  içinde logo + "Bölüş" + kalan tutar. Gövde sade beyaz kart.
+  HAREKET/ANİMASYON YOK (Yiğithan istemedi). Sade ama renkli.
+- LOGO: Türk Lirası işareti (dikey gövde + alt çizgi + iki eğik
+  çizgi) ile bölme işaretinin iki noktası BİRLEŞİK. SVG olarak
+  üç sayfanın da bandına gömülü (beyaz çizgiler + #7fe0e8 noktalar).
+  Ayrı bir logo dosyası YOK; SVG doğrudan HTML içinde inline.
+- Müşteri sayfası ilerleme çubuğu: bant içinde beyaz dolu, yarı
+  saydam ray. Kalemler beyaz gövdede, "öde" butonu lacivert,
+  "Hepsini Öde" turkuaz.
+
+ÜÇ SAYFA DA (index.html, garson.html, qr-uret.html) bu kimliğe
+geçirildi; ödeme/işlev mantığına HİÇ dokunulmadı.
+NOT: qr-uret.html yazılırken Filesystem eklentisi bir kez takıldı;
+yeni sohbette ilk iş bu dosyanın gerçekten güncellendiğini doğrula
+(en üstte "Plus Jakarta Sans" ve "--turkuaz" yazıyorsa tamamdır).
+
+═══════════════════════════════════════════════════════════
+BUGÜNE KADAR BİTENLER (✅ canlıda çalışıyor, test edildi)
+═══════════════════════════════════════════════════════════
+
+✅ iyzico sandbox entegrasyonu (uçtan uca)
+✅ Ödeme akışı GERÇEK adisyona bağlı (tam + kısmi ödeme)
+✅ Ödeme başarılı olunca Supabase'e yazılıyor, kalemler güncelleniyor
+✅ Adisyon, kalan sıfırlanınca sunucu tarafından otomatik kapanıyor
+✅ Canlıya çıkış (Vercel), otomatik deploy, env değişkenleri
+✅ RLS GÜVENLİK SIKILAŞTIRMASI (anon kısıtlı, sunucu service key'le yazıyor)
+✅ Garson adisyon kapatma yetkisi (authenticated UPDATE politikası)
+✅ ASKIDA ÖDEME SİSTEMİ: beklemede kaydı + token + atomik tamamlama
+   + çift-işleme kilidi
+✅ OTOMATİK KONTROLCÜ + günlük cron (beklemede takılanları toparlar)
+✅ GÖRÜNÜM CİLASI TAMAMLANDI: turkuaz-lacivert kimlik + logo, üç
+   sayfaya da uygulandı (yukarıdaki TASARIM KİMLİĞİ bölümüne bak)
+
+═══════════════════════════════════════════════════════════
+PİLOTA KALAN İŞLER (henüz YAPILMADI)
+═══════════════════════════════════════════════════════════
+
+1. (✅ BİTTİ) GÖRÜNÜM CİLASI — yukarıdaki TASARIM KİMLİĞİ bölümüne
+   bakılsın. Sıradaki büyük adım artık gerçek paraya geçiş.
+
+2. GERÇEK PARAYA GEÇİŞ: Pilot modeli = restoranın KENDİ iyzico
+   CANLI hesabı (para doğrudan restorana, Bölüş sadece yazılım;
+   şirket/lisans gerekmez). Gereken: restoranın iyzico canlı
+   hesabı açması + evrak + iyzico onayı (günler-haftalar sürebilir)
+   + akrabayla konuşma. Sandbox'tan canlıya geçişte anahtarlar
+   restoranınkiyle değişecek. Marketplace/submerchant modeli
+   "gerçek ürün/ölçekleme" aşamasına bırakıldı.
+
+3. (İYİLEŞTİRME, acil değil) adisyonlar UPDATE izni şu an "true"
+   ile geniş; ileride "garson sadece kendi restoranının
+   adisyonlarını günceller" diye daraltılabilir.
+
+4. (UZAK HEDEF) Next.js geçişi, marketplace, POS entegrasyonu,
+   başka restoranlara satış, sunum + demo.
+
+NOT — POS / GARSON ÇİFT İŞ TARTIŞMASI (bu sohbette uzun konuşuldu):
+Yiğithan "garson hem kendi POS'una hem Bölüş'e girmesin, çift iş
+olmasın" dedi (haklı; düşük kullanımda boşa emek). İdeal çözüm:
+Bölüş'ün veriyi POS'tan otomatik alması (Sunday'in modeli). AMA bu
+bugün ulaşılmaz: POS şirketi (Adisyo vb.) kapısını ancak kanıt/talep
+olan birine açar. DOĞRU SIRA: önce pilotta (garson elle girer, geçici)
+çalış → kanıt + birkaç istekli restoran topla → SONRA POS kapısını
+çal. "Fiş fotoğrafından okuma" ve "müşteri self-servis sipariş" de
+konuşuldu; ikisi de pilot için fazla iş, sonraya bırakıldı.
+Not: Dürbün'ün hangi POS'u kullandığı akrabayla konuşulunca
+öğrenilecek (kritik bilgi).
+
+MİMARİ KARARI: Müşteri sayfası şu an Supabase'e doğrudan bağlanıyor
+("1. yol"). "2. yol" (her şey sunucudan) konuşuldu ama pilot için
+1. yol seçildi (RLS düzgünse güvenli; satışta 2. yola geçiş emek
+kaybı değil, RLS kuralları aynen kalır).
+
+═══════════════════════════════════════════════════════════
+ÇALIŞMA TARZIMIZ (LÜTFEN UY)
+═══════════════════════════════════════════════════════════
+
+🟢 YAP:
+- Türkçe konuş
+- Sohbet ederek ilerle, bir adımda çok şey yapma
+- Karar vermeden önce sor, seçenekleri açıkla, önerini de ver
+  (ama ben "sen yönet, takılma" dersem sen karar ver, ilerle)
+- Karmaşık şeyleri günlük dil ve metaforlarla anlat
+- Hocam gibi davran, Cursor gibi değil
+- Hataları ben yapayım, sonra beraber çözelim
+- Acele etme
+- Hafızan dolup yavaşlarsan SÖYLE, yeni sohbete geçeyim
+- Kod değişikliklerini Filesystem eklentisiyle sen yaz
+
+🔴 YAPMA:
+- Üst üste tablo, başlık, kod bloğu basma
+- Bilmediğim kelimeyi açıklamadan kullanma
+- "Cursor'a yazdır" deme
+- "Kolay" deme — net adımlar ver
+- Tek mesajda hem soru sor hem komut ver
+- Beni teknik detaya boğma — sade ve net yönlendir
+
+NOT: index.html'i Filesystem ile yazarken bazen EPERM (izin) hatası
+çıkabiliyor (VS Code ya da "vercel dev" dosyayı kilitliyor). Çözüm:
+index.html sekmesini kapat / vercel dev'i Ctrl+C ile durdur, sonra
+yaz. api/ içindeki .js dosyaları genelde takılmıyor.
+
+═══════════════════════════════════════════════════════════
+İLK GÖREVİN
+═══════════════════════════════════════════════════════════
+
+Bu prompt'u okuduğunu onayla. Sonra şöyle başla:
+"Tamam Yiğithan, kaldığımız yerden devam ediyoruz. Şu an
+[şu noktadayız], sıradaki adım [bu]. Hazır mısın?"
+
+Bana sıradaki işler için (görünüm cilası / gerçek paraya geçiş)
+hangisinden başlamak istediğimi sor. Önerin: görünüm cilası,
+çünkü akrabaya göstereceğim için en çok fark yaratan o.
+
+Bolus-Pazar-Arastirmasi-Raporu.docx dosyasını tekrar
+yükleyebilirim, referans olarak elinde dursun.
+
+Hadi başlayalım!
