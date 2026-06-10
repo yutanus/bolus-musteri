@@ -26,6 +26,7 @@ module.exports = function handler(request, response) {
   const body = request.body || {};
   const fis = body.fis;
   const gelenTutar = Number(body.tutar);
+  const bahsis = Number(body.bahsis) || 0;  // varsa bahsis, yoksa 0
 
   // Basit kontroller
   if (!fis) {
@@ -110,6 +111,7 @@ module.exports = function handler(request, response) {
       await supabase.from('odemeler').insert({
         adisyon_id: adisyonId,
         tutar: gelenTutar,
+        bahsis: bahsis,
         durum: 'beklemede',
         token: sonuc.token
       });

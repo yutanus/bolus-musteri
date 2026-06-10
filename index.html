@@ -98,6 +98,19 @@
     .sepet-etiket { flex: 1; text-align: right; font-size: 13.5px; font-weight: 700; color: var(--turkuaz-koyu); }
     .sepet-etiket.bos { color: var(--soft); font-weight: 500; }
 
+    /* ---- Bahşiş ---- */
+    .bahsis-alan { display: none; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .bahsis-baslik { font-size: 13px; font-weight: 600; color: var(--soft); margin-bottom: 11px; }
+    .bahsis-secenekler { display: flex; flex-wrap: wrap; gap: 8px; }
+    .bahsis-btn {
+      flex: 1; min-width: 64px; padding: 12px 8px;
+      border-radius: 11px; border: 1.5px solid var(--line); background: #fff;
+      color: var(--ink); font-size: 14px; font-weight: 700;
+    }
+    .bahsis-btn.aktif { border-color: var(--turkuaz); background: #eafafc; color: var(--turkuaz-koyu); }
+    .bahsis-btn.yok { flex-basis: 100%; flex-grow: 0; color: var(--soft); font-weight: 600; }
+    .bahsis-btn.yok.aktif { color: var(--turkuaz-koyu); }
+
     .sepet-ozet { display: none; text-align: center; font-size: 14px; color: var(--soft); font-weight: 600; margin-top: 18px; }
     .sepet-ozet b { color: var(--ink); font-weight: 800; }
 
@@ -164,6 +177,7 @@
 
     <div class="govde">
       <div id="kalemler"></div>
+      <div id="bahsis-alan" class="bahsis-alan"></div>
       <div id="sepet-ozet" class="sepet-ozet"></div>
       <button id="sectiklerimi-ode-btn">Seçtiklerimi Öde</button>
       <button id="hepsini-ode-btn">Hepsini Öde</button>
@@ -193,18 +207,29 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
     // Sayfa durumu: veriyi BİR KEZ çekip burada tutuyoruz.
-    // Böylece +/− tuşları internete gitmeden, anında çalışır (takılma biter).
+    // Böylece +/− tuşları internete gitmeden, anında çalışır.
     let islemDevamEdiyor = false
     let mevcutMasa = null
     let mevcutAdisyon = null
     let mevcutKalemler = []
     const sepet = {}   // kalem id -> kaç adet seçildi (0 = sepette değil)
 
+    // Bahşiş durumu
+    let bahsisTip = 'none'   // 'none' | 'percent' | 'tl'
+    let bahsisDeger = 0      // yüzde (5/10/15) ya da TL tutarı
+
     function toastGoster(mesaj, tip) {
       const toast = document.getElementById('toast')
       toast.className = 'gozuk ' + (tip || 'basari')
       toast.innerHTML = mesaj
       setTimeout(() => { toast.className = '' }, 3000)
+    }
+
+    // Ödenecek tabana göre bahşişi hesapla (kuruşa yuvarlanır)
+    function bahsisHesapla(taban) {
+      if (bahsisTip === 'percent') return Math.round(taban * bahsisDeger) / 100
+      if (bahsisTip === 'tl') return bahsisDeger
+      return 0
     }
 
     const urlParametreleri = new URLSearchParams(window.location.search)
@@ -240,13 +265,53 @@
         .eq('adisyon_id', adisyon.id).order('id', { ascending: true })
 
       mevcutKalemler = kalemler || []
-      // Sepet başlangıçta boş: müşteri ne yediyse kendisi seçecek
       mevcutKalemler.forEach(k => { if (sepet[k.id] === undefined) sepet[k.id] = 0 })
 
       ekraniCiz()
     }
 
-    // --- Ekranı SADECE hafızadaki veriden çiz (internet yok = anında) ---
+    // --- Bahşiş seçeneklerini çiz ---
+    function bahsisAlaniCiz() {
+      const el = document.getElementById('bahsis-alan')
+      const oranlar = [5, 10, 15]
+      let html = '<div class="bahsis-baslik">Bahşiş eklemek ister misin?</div><div class="bahsis-secenekler">'
+
+      oranlar.forEach(o => {
+        const aktif = (bahsisTip === 'percent' && bahsisDeger === o) ? ' aktif' : ''
+        html += `<button class="bahsis-btn${aktif}" data-bahsis="percent" data-deger="${o}">%${o}</button>`
+      })
+
+      const tlAktif = bahsisTip === 'tl' ? ' aktif' : ''
+      const yokAktif = bahsisTip === 'none' ? ' aktif' : ''
+      const tlEtiket = bahsisTip === 'tl' ? `${bahsisDeger.toFixed(2)}₺` : 'Kendi tutarım'
+      html += `<button class="bahsis-btn${tlAktif}" data-bahsis="tl">${tlEtiket}</button>`
+      html += `<button class="bahsis-btn yok${yokAktif}" data-bahsis="none">Bahşiş yok</button>`
+      html += '</div>'
+      el.innerHTML = html
+
+      el.querySelectorAll('[data-bahsis]').forEach(btn => {
+        btn.onclick = () => {
+          const tip = btn.getAttribute('data-bahsis')
+          if (tip === 'percent') {
+            bahsisTip = 'percent'
+            bahsisDeger = Number(btn.getAttribute('data-deger'))
+          } else if (tip === 'none') {
+            bahsisTip = 'none'
+            bahsisDeger = 0
+          } else if (tip === 'tl') {
+            const girilen = prompt('Bahşiş tutarını yaz (₺):', bahsisTip === 'tl' ? String(bahsisDeger) : '')
+            if (girilen === null) return
+            const sayi = Number(String(girilen).replace(',', '.'))
+            if (isNaN(sayi) || sayi < 0) { toastGoster('Geçerli bir tutar yaz', 'hata'); return }
+            bahsisTip = sayi > 0 ? 'tl' : 'none'
+            bahsisDeger = sayi
+          }
+          ekraniCiz()
+        }
+      })
+    }
+
+    // --- Ekranı SADECE hafızadaki veriden çiz ---
     function ekraniCiz() {
       const adisyonBilgi = document.getElementById('adisyon-bilgi')
       const kalemlerDiv = document.getElementById('kalemler')
@@ -254,12 +319,13 @@
       const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
       const sectiklerimiBtn = document.getElementById('sectiklerimi-ode-btn')
       const sepetOzet = document.getElementById('sepet-ozet')
+      const bahsisAlan = document.getElementById('bahsis-alan')
 
-      // Açık hesap yoksa
       if (!mevcutAdisyon) {
         const numara = mevcutMasa ? mevcutMasa.numara : ''
         adisyonBilgi.innerHTML = `<div class="ozet-masa">${numara}</div><div class="ozet-etiket">Bu masada şu an açık bir hesap yok.</div>`
         kalemlerDiv.innerHTML = ''
+        bahsisAlan.style.display = 'none'
         hepsiniOdeBtn.style.display = 'none'
         sectiklerimiBtn.style.display = 'none'
         sepetOzet.style.display = 'none'
@@ -273,14 +339,12 @@
       const kalan = toplam - odenen
       const yuzde = toplam > 0 ? Math.round((odenen / toplam) * 100) : 0
 
-      // Seçilenlerin toplamı
       let seciliTutar = 0, seciliAdet = 0
       kalemler.forEach(k => {
         const s = sepet[k.id] || 0
         if (s > 0) { seciliTutar += Number(k.birim_fiyat) * s; seciliAdet += s }
       })
 
-      // Üst bant
       adisyonBilgi.innerHTML = `
         <div class="ozet-masa">${mevcutMasa.numara}</div>
         <div class="ozet-etiket">Kalan tutar</div>
@@ -292,7 +356,6 @@
         </div>
       `
 
-      // Kalemler
       kalemlerDiv.innerHTML = kalemler.length > 0 ? '<div class="bolum-baslik">Sipariş kalemleri</div>' : ''
       kalemler.forEach((kalem) => {
         const kalanAdet = kalem.adet - kalem.odenmis_adet
@@ -342,22 +405,36 @@
       const hesapBitti = kalan === 0 && kalemler.length > 0
       tamamlandiDiv.style.display = hesapBitti ? 'block' : 'none'
 
-      // Seçilenler özeti + "Seçtiklerimi Öde" butonu
+      // Bahşiş alanı: ödenecek bir şey varken görünür
+      if (!hesapBitti && kalan > 0) {
+        bahsisAlan.style.display = 'block'
+        bahsisAlaniCiz()
+      } else {
+        bahsisAlan.style.display = 'none'
+      }
+
+      // Seçilenler özeti + "Seçtiklerimi Öde"
       if (!hesapBitti && seciliTutar > 0) {
+        const b = bahsisHesapla(seciliTutar)
         sepetOzet.style.display = 'block'
-        sepetOzet.innerHTML = `${seciliAdet} adet seçildi · <b>${seciliTutar.toFixed(2)}₺</b>`
+        sepetOzet.innerHTML = b > 0
+          ? `${seciliAdet} adet · ${seciliTutar.toFixed(2)}₺ + ${b.toFixed(2)}₺ bahşiş = <b>${(seciliTutar + b).toFixed(2)}₺</b>`
+          : `${seciliAdet} adet seçildi · <b>${seciliTutar.toFixed(2)}₺</b>`
         sectiklerimiBtn.style.display = 'block'
-        sectiklerimiBtn.innerHTML = 'Seçtiklerimi Öde · ' + seciliTutar.toFixed(2) + '₺'
+        sectiklerimiBtn.innerHTML = 'Seçtiklerimi Öde · ' + (seciliTutar + b).toFixed(2) + '₺'
         sectiklerimiBtn.onclick = () => sectiklerimiOde()
       } else {
         sepetOzet.style.display = 'none'
         sectiklerimiBtn.style.display = 'none'
       }
 
-      // "Hepsini Öde" butonu
+      // "Hepsini Öde"
       if (!hesapBitti && kalan > 0) {
+        const b = bahsisHesapla(kalan)
         hepsiniOdeBtn.style.display = 'block'
-        hepsiniOdeBtn.innerHTML = 'Hepsini Öde · ' + kalan.toFixed(2) + '₺'
+        hepsiniOdeBtn.innerHTML = b > 0
+          ? 'Hepsini Öde · ' + (kalan + b).toFixed(2) + '₺ (bahşiş dahil)'
+          : 'Hepsini Öde · ' + kalan.toFixed(2) + '₺'
         hepsiniOdeBtn.onclick = () => hepsiniOde(kalan)
       } else {
         hepsiniOdeBtn.style.display = 'none'
@@ -380,44 +457,48 @@
       })
     }
 
-    // --- Ödeme: seçilen birden fazla kalemi tek fişte gönder ---
+    // --- Ödeme: seçilen kalemler + bahşiş ---
     function sectiklerimiOde() {
       if (islemDevamEdiyor) return
 
       let fis = 'MULTI-' + mevcutAdisyon.id
-      let tutar = 0
+      let taban = 0
       mevcutKalemler.forEach(k => {
         const s = sepet[k.id] || 0
         if (s > 0) {
           fis += '-' + k.id + '-' + s
-          tutar += Number(k.birim_fiyat) * s
+          taban += Number(k.birim_fiyat) * s
         }
       })
 
-      if (tutar <= 0) {
+      if (taban <= 0) {
         toastGoster('Önce ödeyeceğin kalemleri seç', 'hata')
         return
       }
 
+      const bahsis = bahsisHesapla(taban)
       islemDevamEdiyor = true
-      odemeyeYonlen(fis, tutar)
+      odemeyeYonlen(fis, taban + bahsis, bahsis)
     }
 
     async function hepsiniOde(kalan) {
       if (islemDevamEdiyor) return
-      if (!confirm('Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ' + kalan.toFixed(2) + '₺')) {
-        return
-      }
+      const bahsis = bahsisHesapla(kalan)
+      const toplam = kalan + bahsis
+      const mesaj = bahsis > 0
+        ? `Toplam ${kalan.toFixed(2)}₺ + ${bahsis.toFixed(2)}₺ bahşiş = ${toplam.toFixed(2)}₺ ödenecek. Onaylıyor musun?`
+        : `Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ${kalan.toFixed(2)}₺`
+      if (!confirm(mesaj)) return
       islemDevamEdiyor = true
-      await odemeyeYonlen('FULL-' + mevcutAdisyon.id, kalan)
+      await odemeyeYonlen('FULL-' + mevcutAdisyon.id, toplam, bahsis)
     }
 
-    async function odemeyeYonlen(fis, tutar) {
+    async function odemeyeYonlen(fis, tutar, bahsis) {
       try {
         const cevap = await fetch('/api/odeme-baslat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fis: fis, tutar: tutar })
+          body: JSON.stringify({ fis: fis, tutar: tutar, bahsis: bahsis || 0 })
         })
         const veri = await cevap.json()
         if (!veri.basarili || !veri.sonuc || !veri.sonuc.paymentPageUrl) {
