@@ -119,6 +119,11 @@ async function odemeyiTamamla(token, sonuc) {
     await tumAdisyonuUygula(adisyonId);
   } else if (tip === 'ITEM') {
     await kalemiUygula(adisyonId, Number(parcalar[2]), Number(parcalar[3]));
+  } else if (tip === 'MULTI') {
+    // MULTI-<adisyon>-<kalemId>-<adet>-<kalemId>-<adet>-... seklinde ikiserli ilerler
+    for (let i = 2; i + 1 < parcalar.length; i += 2) {
+      await kalemiUygula(adisyonId, Number(parcalar[i]), Number(parcalar[i + 1]));
+    }
   } else {
     throw new Error('Taninmayan fis tipi: ' + fis);
   }

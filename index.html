@@ -56,7 +56,7 @@
     .ozet-etiket { font-size: 13px; font-weight: 500; color: #cfeef2; margin-top: 2px; }
     .ozet-tutar { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; color: #fff; margin: 2px 0 14px; }
     .ilerleme-ray { height: 8px; background: rgba(255,255,255,0.25); border-radius: 99px; overflow: hidden; margin-bottom: 12px; }
-    .ilerleme-dolu { height: 100%; background: #fff; border-radius: 99px; }
+    .ilerleme-dolu { height: 100%; background: #fff; border-radius: 99px; transition: width 0.3s; }
     .ozet-satirlar { display: flex; justify-content: space-between; font-size: 13px; color: #cfeef2; font-weight: 500; }
     .ozet-satirlar b { color: #fff; font-weight: 600; }
 
@@ -70,6 +70,13 @@
     }
     .kalem:last-of-type { border-bottom: none; }
     .kalem.tamamen-odendi { opacity: 0.55; }
+    .kalem.secili {
+      background: #f4fbfc;
+      border-radius: 12px;
+      padding: 13px 12px;
+      border-bottom: 1px solid transparent;
+      box-shadow: inset 0 0 0 1.5px var(--acik-turkuaz);
+    }
     .kalem-ust { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .kalem-ad { font-weight: 600; font-size: 15.5px; color: var(--ink); }
     .kalem-detay { font-size: 12.5px; color: var(--soft); margin-top: 3px; font-weight: 500; }
@@ -88,21 +95,28 @@
     .adet-btn:disabled { color: #c2cccc; background: #f4f7f7; cursor: not-allowed; }
     .adet-sayi { min-width: 26px; text-align: center; font-weight: 700; font-size: 16px; color: var(--ink); }
 
-    .ode-btn {
-      flex: 1; margin-left: 6px;
-      background: var(--lacivert); color: #fff; border: none;
-      padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700;
-    }
-    .ode-btn:active { background: var(--lacivert-koyu); }
+    .sepet-etiket { flex: 1; text-align: right; font-size: 13.5px; font-weight: 700; color: var(--turkuaz-koyu); }
+    .sepet-etiket.bos { color: var(--soft); font-weight: 500; }
 
-    #hepsini-ode-btn {
+    .sepet-ozet { display: none; text-align: center; font-size: 14px; color: var(--soft); font-weight: 600; margin-top: 18px; }
+    .sepet-ozet b { color: var(--ink); font-weight: 800; }
+
+    #sectiklerimi-ode-btn {
       display: none; width: 100%;
       background: var(--turkuaz); color: #fff; border: none;
       padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700;
-      margin-top: 16px;
+      margin-top: 10px;
       box-shadow: 0 8px 20px rgba(14, 165, 181, 0.3);
     }
-    #hepsini-ode-btn:active { background: var(--turkuaz-koyu); }
+    #sectiklerimi-ode-btn:active { background: var(--turkuaz-koyu); }
+
+    #hepsini-ode-btn {
+      display: none; width: 100%;
+      background: var(--lacivert); color: #fff; border: none;
+      padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700;
+      margin-top: 10px;
+    }
+    #hepsini-ode-btn:active { background: var(--lacivert-koyu); }
 
     .guven-notu { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 18px; font-size: 12px; color: var(--soft); font-weight: 500; }
 
@@ -150,6 +164,8 @@
 
     <div class="govde">
       <div id="kalemler"></div>
+      <div id="sepet-ozet" class="sepet-ozet"></div>
+      <button id="sectiklerimi-ode-btn">Seçtiklerimi Öde</button>
       <button id="hepsini-ode-btn">Hepsini Öde</button>
       <div class="guven-notu">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5a7178" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -176,7 +192,13 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
+    // Sayfa durumu: veriyi BİR KEZ çekip burada tutuyoruz.
+    // Böylece +/− tuşları internete gitmeden, anında çalışır (takılma biter).
     let islemDevamEdiyor = false
+    let mevcutMasa = null
+    let mevcutAdisyon = null
+    let mevcutKalemler = []
+    const sepet = {}   // kalem id -> kaç adet seçildi (0 = sepette değil)
 
     function toastGoster(mesaj, tip) {
       const toast = document.getElementById('toast')
@@ -188,13 +210,9 @@
     const urlParametreleri = new URLSearchParams(window.location.search)
     const qrKod = urlParametreleri.get('qr') || 'x7gh2km9pq'
 
-    const secimler = {}
-
+    // --- Veriyi bir kez çek, sonra ekranı çiz ---
     async function adisyonGetir() {
       const adisyonBilgi = document.getElementById('adisyon-bilgi')
-      const kalemlerDiv = document.getElementById('kalemler')
-      const tamamlandiDiv = document.getElementById('tamamlandi')
-      const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
 
       const { data: masa, error: masaHata } = await supabase
         .from('masalar').select('*').eq('qr_kod', qrKod).single()
@@ -203,16 +221,17 @@
         adisyonBilgi.innerHTML = '<div class="ozet-etiket">Masa bulunamadı.</div>'
         return
       }
+      mevcutMasa = masa
 
       const { data: adisyon } = await supabase
         .from('adisyonlar').select('*')
         .eq('masa_id', masa.id).eq('durum', 'acik').maybeSingle()
 
+      mevcutAdisyon = adisyon || null
+
       if (!adisyon) {
-        adisyonBilgi.innerHTML = `<div class="ozet-masa">${masa.numara}</div><div class="ozet-etiket">Bu masada şu an açık bir hesap yok.</div>`
-        kalemlerDiv.innerHTML = ''
-        hepsiniOdeBtn.style.display = 'none'
-        tamamlandiDiv.style.display = 'none'
+        mevcutKalemler = []
+        ekraniCiz()
         return
       }
 
@@ -220,13 +239,50 @@
         .from('adisyon_kalemleri').select('*')
         .eq('adisyon_id', adisyon.id).order('id', { ascending: true })
 
+      mevcutKalemler = kalemler || []
+      // Sepet başlangıçta boş: müşteri ne yediyse kendisi seçecek
+      mevcutKalemler.forEach(k => { if (sepet[k.id] === undefined) sepet[k.id] = 0 })
+
+      ekraniCiz()
+    }
+
+    // --- Ekranı SADECE hafızadaki veriden çiz (internet yok = anında) ---
+    function ekraniCiz() {
+      const adisyonBilgi = document.getElementById('adisyon-bilgi')
+      const kalemlerDiv = document.getElementById('kalemler')
+      const tamamlandiDiv = document.getElementById('tamamlandi')
+      const hepsiniOdeBtn = document.getElementById('hepsini-ode-btn')
+      const sectiklerimiBtn = document.getElementById('sectiklerimi-ode-btn')
+      const sepetOzet = document.getElementById('sepet-ozet')
+
+      // Açık hesap yoksa
+      if (!mevcutAdisyon) {
+        const numara = mevcutMasa ? mevcutMasa.numara : ''
+        adisyonBilgi.innerHTML = `<div class="ozet-masa">${numara}</div><div class="ozet-etiket">Bu masada şu an açık bir hesap yok.</div>`
+        kalemlerDiv.innerHTML = ''
+        hepsiniOdeBtn.style.display = 'none'
+        sectiklerimiBtn.style.display = 'none'
+        sepetOzet.style.display = 'none'
+        tamamlandiDiv.style.display = 'none'
+        return
+      }
+
+      const kalemler = mevcutKalemler
       const toplam = kalemler.reduce((acc, k) => acc + Number(k.birim_fiyat) * k.adet, 0)
       const odenen = kalemler.reduce((acc, k) => acc + Number(k.birim_fiyat) * k.odenmis_adet, 0)
       const kalan = toplam - odenen
       const yuzde = toplam > 0 ? Math.round((odenen / toplam) * 100) : 0
 
+      // Seçilenlerin toplamı
+      let seciliTutar = 0, seciliAdet = 0
+      kalemler.forEach(k => {
+        const s = sepet[k.id] || 0
+        if (s > 0) { seciliTutar += Number(k.birim_fiyat) * s; seciliAdet += s }
+      })
+
+      // Üst bant
       adisyonBilgi.innerHTML = `
-        <div class="ozet-masa">${masa.numara}</div>
+        <div class="ozet-masa">${mevcutMasa.numara}</div>
         <div class="ozet-etiket">Kalan tutar</div>
         <div class="ozet-tutar">${kalan.toFixed(2)}₺</div>
         <div class="ilerleme-ray"><div class="ilerleme-dolu" style="width:${yuzde}%"></div></div>
@@ -236,32 +292,16 @@
         </div>
       `
 
-      if (kalan === 0 && kalemler.length > 0) {
-        tamamlandiDiv.style.display = 'block'
-        hepsiniOdeBtn.style.display = 'none'
-      } else {
-        tamamlandiDiv.style.display = 'none'
-        if (kalan > 0) {
-          hepsiniOdeBtn.style.display = 'block'
-          hepsiniOdeBtn.innerHTML = 'Hepsini Öde · ' + kalan.toFixed(2) + '₺'
-          hepsiniOdeBtn.onclick = () => hepsiniOde(adisyon.id, kalan)
-        } else {
-          hepsiniOdeBtn.style.display = 'none'
-        }
-      }
-
+      // Kalemler
       kalemlerDiv.innerHTML = kalemler.length > 0 ? '<div class="bolum-baslik">Sipariş kalemleri</div>' : ''
       kalemler.forEach((kalem) => {
         const kalanAdet = kalem.adet - kalem.odenmis_adet
         const tamamenOdendi = kalanAdet === 0
         const birimFiyat = Number(kalem.birim_fiyat)
-
-        if (secimler[kalem.id] === undefined || secimler[kalem.id] > kalanAdet) {
-          secimler[kalem.id] = kalanAdet > 0 ? 1 : 0
-        }
+        const secili = sepet[kalem.id] || 0
 
         const satir = document.createElement('div')
-        satir.className = tamamenOdendi ? 'kalem tamamen-odendi' : 'kalem'
+        satir.className = 'kalem' + (tamamenOdendi ? ' tamamen-odendi' : (secili > 0 ? ' secili' : ''))
 
         const odenmisYazi = kalem.odenmis_adet > 0 ? ` · ${kalem.odenmis_adet}/${kalem.adet} ödendi` : ''
 
@@ -276,8 +316,10 @@
             </div>
           `
         } else {
-          const secili = secimler[kalem.id]
-          const odenecekTutar = (birimFiyat * secili).toFixed(2)
+          const araToplam = (birimFiyat * secili).toFixed(2)
+          const etiket = secili > 0
+            ? `<span class="sepet-etiket">${secili} × ${birimFiyat.toFixed(2)}₺ = ${araToplam}₺</span>`
+            : `<span class="sepet-etiket bos">Ödeyeceğin adedi seç</span>`
           satir.innerHTML = `
             <div class="kalem-ust">
               <div>
@@ -287,56 +329,87 @@
               <div class="kalem-fiyat">${(birimFiyat * kalem.adet).toFixed(2)}₺</div>
             </div>
             <div class="kalem-alt">
-              <button class="adet-btn" data-aksiyon="azalt" data-kalem-id="${kalem.id}" ${secili <= 1 ? 'disabled' : ''}>−</button>
+              <button class="adet-btn" data-aksiyon="azalt" data-kalem-id="${kalem.id}" ${secili <= 0 ? 'disabled' : ''}>−</button>
               <span class="adet-sayi">${secili}</span>
               <button class="adet-btn" data-aksiyon="arttir" data-kalem-id="${kalem.id}" ${secili >= kalanAdet ? 'disabled' : ''}>+</button>
-              <button class="ode-btn" data-aksiyon="ode" data-kalem-id="${kalem.id}">${secili} adet öde · ${odenecekTutar}₺</button>
+              ${etiket}
             </div>
           `
         }
         kalemlerDiv.appendChild(satir)
       })
 
-      document.querySelectorAll('[data-aksiyon]').forEach(btn => {
-        btn.onclick = () => butonAksiyon(btn, adisyon.id, kalemler)
+      const hesapBitti = kalan === 0 && kalemler.length > 0
+      tamamlandiDiv.style.display = hesapBitti ? 'block' : 'none'
+
+      // Seçilenler özeti + "Seçtiklerimi Öde" butonu
+      if (!hesapBitti && seciliTutar > 0) {
+        sepetOzet.style.display = 'block'
+        sepetOzet.innerHTML = `${seciliAdet} adet seçildi · <b>${seciliTutar.toFixed(2)}₺</b>`
+        sectiklerimiBtn.style.display = 'block'
+        sectiklerimiBtn.innerHTML = 'Seçtiklerimi Öde · ' + seciliTutar.toFixed(2) + '₺'
+        sectiklerimiBtn.onclick = () => sectiklerimiOde()
+      } else {
+        sepetOzet.style.display = 'none'
+        sectiklerimiBtn.style.display = 'none'
+      }
+
+      // "Hepsini Öde" butonu
+      if (!hesapBitti && kalan > 0) {
+        hepsiniOdeBtn.style.display = 'block'
+        hepsiniOdeBtn.innerHTML = 'Hepsini Öde · ' + kalan.toFixed(2) + '₺'
+        hepsiniOdeBtn.onclick = () => hepsiniOde(kalan)
+      } else {
+        hepsiniOdeBtn.style.display = 'none'
+      }
+
+      // +/− tuşları: sadece hafızadaki sepeti değiştir, anında yeniden çiz
+      kalemlerDiv.querySelectorAll('[data-aksiyon]').forEach(btn => {
+        btn.onclick = () => {
+          const aksiyon = btn.getAttribute('data-aksiyon')
+          const kalemId = Number(btn.getAttribute('data-kalem-id'))
+          const kalem = kalemler.find(k => k.id === kalemId)
+          const kalanAdet = kalem.adet - kalem.odenmis_adet
+          const simdiki = sepet[kalemId] || 0
+
+          if (aksiyon === 'arttir' && simdiki < kalanAdet) sepet[kalemId] = simdiki + 1
+          else if (aksiyon === 'azalt' && simdiki > 0) sepet[kalemId] = simdiki - 1
+
+          ekraniCiz()
+        }
       })
     }
 
-    function butonAksiyon(btn, adisyonId, kalemler) {
-      const aksiyon = btn.getAttribute('data-aksiyon')
-      const kalemId = Number(btn.getAttribute('data-kalem-id'))
-      const kalem = kalemler.find(k => k.id === kalemId)
-      const kalanAdet = kalem.adet - kalem.odenmis_adet
-
-      if (aksiyon === 'arttir') {
-        if (secimler[kalemId] < kalanAdet) secimler[kalemId]++
-        adisyonGetir()
-      } else if (aksiyon === 'azalt') {
-        if (secimler[kalemId] > 1) secimler[kalemId]--
-        adisyonGetir()
-      } else if (aksiyon === 'ode') {
-        kismiOde(adisyonId, kalem, secimler[kalemId])
-      }
-    }
-
-    async function kismiOde(adisyonId, kalem, adet) {
+    // --- Ödeme: seçilen birden fazla kalemi tek fişte gönder ---
+    function sectiklerimiOde() {
       if (islemDevamEdiyor) return
-      islemDevamEdiyor = true
-      const birimFiyat = Number(kalem.birim_fiyat)
-      const tutar = birimFiyat * adet
-      const fis = 'ITEM-' + adisyonId + '-' + kalem.id + '-' + adet
-      await odemeyeYonlen(fis, tutar)
-    }
 
-    async function hepsiniOde(adisyonId, kalan) {
-      if (islemDevamEdiyor) return
-      islemDevamEdiyor = true
-      if (!confirm('Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ' + kalan.toFixed(2) + '₺')) {
-        islemDevamEdiyor = false
+      let fis = 'MULTI-' + mevcutAdisyon.id
+      let tutar = 0
+      mevcutKalemler.forEach(k => {
+        const s = sepet[k.id] || 0
+        if (s > 0) {
+          fis += '-' + k.id + '-' + s
+          tutar += Number(k.birim_fiyat) * s
+        }
+      })
+
+      if (tutar <= 0) {
+        toastGoster('Önce ödeyeceğin kalemleri seç', 'hata')
         return
       }
-      const fis = 'FULL-' + adisyonId
-      await odemeyeYonlen(fis, kalan)
+
+      islemDevamEdiyor = true
+      odemeyeYonlen(fis, tutar)
+    }
+
+    async function hepsiniOde(kalan) {
+      if (islemDevamEdiyor) return
+      if (!confirm('Tüm ödenmemiş kalemleri ödemek istiyor musun? Toplam: ' + kalan.toFixed(2) + '₺')) {
+        return
+      }
+      islemDevamEdiyor = true
+      await odemeyeYonlen('FULL-' + mevcutAdisyon.id, kalan)
     }
 
     async function odemeyeYonlen(fis, tutar) {

@@ -111,6 +111,10 @@ async function odemeyiTamamla(token, sonuc) {
     await tumAdisyonuUygula(adisyonId);
   } else if (tip === 'ITEM') {
     await kalemiUygula(adisyonId, Number(parcalar[2]), Number(parcalar[3]));
+  } else if (tip === 'MULTI') {
+    for (let i = 2; i + 1 < parcalar.length; i += 2) {
+      await kalemiUygula(adisyonId, Number(parcalar[i]), Number(parcalar[i + 1]));
+    }
   }
 
   await adisyonuKapatmayiDene(adisyonId);
